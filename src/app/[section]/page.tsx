@@ -6,6 +6,7 @@ import { createDemoWorkspace } from "@/lib/workspace/demo";
 import { todayIn } from "@/lib/workspace/format";
 import { loadWorkspace } from "@/lib/workspace/queries";
 import { isSection, sections } from "@/lib/workspace/routes";
+import { parseTourStep } from "@/lib/workspace/tour";
 import { monthSchema } from "@/lib/workspace/validation";
 
 type Props = {
@@ -33,5 +34,5 @@ export default async function WorkspacePage({ params, searchParams }: Props) {
   const purpose = typeof query.tipo === "string" ? query.tipo : undefined;
 
   return <Workspace initial={state} section={section} mode={access.mode}
-    email={access.mode === "auth" ? access.email : null} month={month} today={currentDate} companyId={companyId} purpose={purpose} />;
+    email={access.mode === "auth" ? access.email : null} month={month} today={currentDate} companyId={companyId} purpose={purpose} tourStep={access.mode === "demo" ? parseTourStep(query.recorrido) : null} />;
 }

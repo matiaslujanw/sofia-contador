@@ -16,6 +16,15 @@
 | P1 | Control | Implementado parcialmente | Calendario manual, primeros indicadores, alertas determinísticas básicas y consulta de actividad |
 | P1 | Publicación | Implementado parcialmente | Diseño adaptable, manifiesto e íconos. Falta validar iPad físico y flujo instalable en destino |
 
+## Diseño y recorrido de demostración
+
+| Prioridad | Estado | Entregable |
+| --- | --- | --- |
+| P0 | Verificado | Inicio centrado en el avance del mes, pendientes y acceso a los cierres de cada empresa |
+| P0 | Verificado | Menú con tareas frecuentes visibles, herramientas secundarias desplegables y navegación adaptable |
+| P0 | Verificado | Recorrido de cuatro pasos reanudable y ejercitado sobre los registros de la demo |
+| P0 | Verificado | HTML de prueba sin conexión, con archivo de muestra y persistencia durante la sesión |
+
 ## Trabajo pendiente
 
 | Prioridad | Fase | Estado | Entregable y dependencia |
@@ -38,3 +47,5 @@
 - Pasaron ESLint, TypeScript, 32 pruebas Vitest y el build de producción. El build sirvió el manifiesto y mantuvo el acceso privado con la demo deshabilitada.
 - Pasaron los 10 recorridos Playwright en cada motor, Chromium y WebKit. Se verificó la interfaz en medidas de escritorio, tablet y teléfono. Se corrigió un fallo de WebKit al guardar archivos en IndexedDB y se repitieron la carga, la importación y la descarga.
 - El registro de decisiones está en [Decisiones](docs/DECISIONS.md). Pendientes de verificación externa en [Pruebas](docs/TESTING.md).
+
+- En el rediseño pasaron los builds de Next.js y de la demo portable, 32 pruebas unitarias y 13 recorridos Playwright tanto en Chromium como en WebKit. Se revisaron el inicio y el tutorial en anchos de escritorio, tablet y teléfono.

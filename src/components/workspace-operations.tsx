@@ -5,6 +5,7 @@ import { Building2, ClipboardCheck, FileText, Lock, Pencil, Plus, Unlock } from 
 import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { demoTourTaskId } from "@/lib/workspace/demo";
 import { companyName, cuitLabel, initials, monthLabel, taskProgress } from "@/lib/workspace/format";
 import { periodRows } from "@/lib/workspace/insights";
 import { taskStatuses, type Company, type CompanyValues, type Task } from "@/lib/workspace/model";
@@ -126,19 +127,25 @@ export function PeriodRequired() {
   </section>;
 }
 
-export function ClosingPage() {
+export function ClosingPage({ guide = false, closeGuide }: { guide?: boolean; closeGuide?: () => void }) {
   const { state, company, period, month, canEdit, locale, href, mutate, download } = useWorkspace();
-  const [task, setTask] = useState<Task | "new" | null>(null);
+  const [selectedTask, setTask] = useState<Task | "new" | null>(null);
   const [periodDialog, setPeriodDialog] = useState(false);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("");
   const [error, setError] = useState("");
   const periodTasks = period ? state.tasks.filter((entry) => entry.period_id === period.id).sort((a, b) => a.position - b.position || a.id.localeCompare(b.id)) : [];
+  const task = selectedTask ?? (closeGuide ? periodTasks.find((entry) => entry.id === demoTourTaskId) : null);
   const progress = taskProgress(periodTasks);
   const editable = canEdit && period?.status === "open" && company?.status === "active";
   const currentTask = task && task !== "new" ? task : undefined;
   const docs = state.documents.filter((entry) => entry.period_id === period?.id);
   const tasks = periodTasks.filter((entry) => (!filter || entry.status === filter) && entry.title.toLowerCase().includes(search.toLowerCase()));
+  function closeTask() {
+    setTask(null);
+    closeGuide?.();
+  }
+
   return <>
     <Heading title="Cierre mensual" description={`${company ? companyName(company) + " · " : ""}${monthLabel(month, locale)}`}
       actions={period && canEdit && company?.status === "active" && <>{editable && <button type="button" className="button button-secondary" onClick={() => setTask("new")}><Plus size={17} /> Nueva tarea</button>}
@@ -171,7 +178,8 @@ export function ClosingPage() {
           <thead><tr><th>Tarea</th><th>Estado</th><th>Documento</th><th className="text-right">Acciones</th></tr></thead>
           <tbody>{tasks.map((entry) => {
             const doc = docs.find((item) => item.id === entry.document_id);
-            return <tr key={entry.id}>
+            const highlighted = guide && entry.id === demoTourTaskId;
+            return <tr key={entry.id} className={highlighted ? "tour-target-row" : undefined}>
               <td className="cell-main"><strong>{entry.title}</strong>{entry.notes && <small>{entry.notes}</small>}</td>
               <td><TaskBadge status={entry.status} /></td>
               <td>{doc ? <button type="button" className="text-button" onClick={() => void download(doc).catch((reason: Error) => setError(reason.message))}><FileText size={14} /> {doc.name}</button> : <span className="muted">—</span>}</td>
@@ -181,8 +189,8 @@ export function ClosingPage() {
         </table></div> : <Empty icon={ClipboardCheck} title="Sin tareas para estos filtros" />}
       </section>
     </>}
-    {task && period && <Modal title={currentTask ? currentTask.title : "Nueva tarea"} description={monthLabel(month, locale)} close={() => setTask(null)}>
-      {editable ? <ActionForm close={() => setTask(null)} submit={async (data) => {
+    {task && period && <Modal title={currentTask ? currentTask.title : "Nueva tarea"} description={monthLabel(month, locale)} close={closeTask}>
+      {editable ? <ActionForm close={closeTask} submit={async (data) => {
         await mutate({ type: "task.save", periodId: period.id, id: currentTask?.id, title: fieldValue(data, "title"), status: fieldValue(data, "status") as Task["status"], notes: fieldValue(data, "notes"), documentId: optionalValue(data, "document") }, "Tarea guardada.");
       }}>
         <Field label="Nombre de la tarea" span><Input name="title" defaultValue={currentTask?.title} required maxLength={180} /></Field>

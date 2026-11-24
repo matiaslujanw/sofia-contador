@@ -1,10 +1,11 @@
 "use client";
 
 import {
-  Activity, Building2, CalendarClock, ChartNoAxesCombined, ClipboardCheck, Clock3, FileUp, Files, ListChecks,
-  Plus, ReceiptText, ShieldAlert, Wallet, type LucideIcon,
+  Activity, Building2, CalendarClock, CalendarDays, ChartNoAxesCombined, Check, ChevronDown, ChevronRight,
+  ClipboardCheck, Clock3, FileUp, Files, ListChecks, Plus, ReceiptText, ShieldAlert, Wallet, type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
+import type { CSSProperties } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { companyName, dayLabel, initials, money, monthLabel } from "@/lib/workspace/format";
 import { activityLabel, companyInsights, periodRows, scopeAlerts } from "@/lib/workspace/insights";
@@ -34,49 +35,82 @@ export function StudyDashboard() {
   const activity = state.activity.filter((event) => event.period_id ? periodIds.has(event.period_id) : (!event.company_id || companyIds.has(event.company_id)) && event.created_at.slice(0, 7) === month)
     .sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 4);
 
+  const completedTasks = rows.reduce((total, row) => total + row.progress.complete, 0);
+  const totalTasks = rows.reduce((total, row) => total + row.progress.total, 0);
+  const progress = totalTasks ? Math.round(completedTasks * 100 / totalTasks) : null;
+
   return <>
-    <Heading title="Resumen del estudio" description={`Seguimiento de tus empresas y del cierre de ${monthLabel(month, locale).toLowerCase()}.`}
-      actions={canEdit && <><Link className="button button-secondary" href={href("empresas", {}, { tipo: "nueva" })}><Plus size={17} /> Nueva empresa</Link>
-        <Link className="button button-primary" href={href("documentacion", {}, { tipo: "compras" })}><FileUp size={17} /> Importar archivo</Link></>} />
-    <div className="kpi-grid">
-      <Kpi title="Empresas activas" value={rows.length} note="En el estudio" icon={Building2} />
-      <Kpi title="Cierres pendientes" value={open.length} note="Para el período seleccionado" icon={ClipboardCheck} tone="warning" />
-      <Kpi title="Documentación faltante" value={missing} note="Tareas esperando respaldo" icon={Files} tone="neutral" />
-      <Kpi title="Tareas pendientes" value={pending} note="En períodos sin cerrar" icon={ListChecks} tone="positive" />
-    </div>
-    <div className="dashboard-grid">
-      <section className="panel">
-        <SectionHeading title="Avance del cierre mensual" subtitle={`Por empresa · ${monthLabel(month, locale)}`} icon={ClipboardCheck}
-          action={<Link className="text-button" href={href("cierre")}>Ver cierres</Link>} />
-        {rows.length ? <ul className="data-list close-rows">
+    <section className="study-hero" aria-labelledby="study-title">
+      <div className="study-hero-copy">
+        <p className="study-period"><CalendarDays size={16} aria-hidden="true" /> {monthLabel(month, locale)}</p>
+        <h1 id="study-title">Resumen del estudio</h1>
+        <p className="study-intro">Seguí el cierre mensual y revisá lo que necesita atención.</p>
+        <div className="study-actions">
+          <Link className="button button-primary" href={href("cierre")}><ClipboardCheck size={17} aria-hidden="true" /> Ver cierres</Link>
+          {canEdit && <Link className="button button-secondary" href={href("documentacion", {}, { tipo: "compras" })}><FileUp size={17} aria-hidden="true" /> Importar archivo</Link>}
+        </div>
+      </div>
+      <div className="study-hero-visual">
+        <div className="study-ring" style={{ "--ring-progress": `${progress ?? 0}%` } as CSSProperties}
+          role="img" aria-label={progress === null ? "Sin tareas aplicables" : `Avance general del cierre: ${progress}%`}>
+          <div className="study-ring-label" aria-hidden="true"><strong className="numbers">{progress === null ? "—" : `${progress}%`}</strong><span>Avance general</span></div>
+        </div>
+        {progress !== null && <p className="study-ring-caption"><strong>Avance general</strong>{completedTasks} de {totalTasks} tareas completadas</p>}
+      </div>
+    </section>
+    <section className="study-metrics" aria-label="Indicadores del período">
+      <div><span className="metric-icon metric-violet"><ClipboardCheck size={19} aria-hidden="true" /></span><p><strong className="numbers">{open.length}</strong><span>Cierres por completar</span></p></div>
+      <div><span className="metric-icon metric-mint"><ListChecks size={19} aria-hidden="true" /></span><p><strong className="numbers">{pending}</strong><span>Tareas pendientes</span></p></div>
+      <div><span className="metric-icon metric-amber"><Files size={19} aria-hidden="true" /></span><p><strong className="numbers">{missing}</strong><span>Respaldos pendientes</span></p></div>
+    </section>
+    <div className="study-grid">
+      <section className="panel study-panel">
+        <SectionHeading title="Cierres por empresa" subtitle={rows.length ? `${rows.length} ${rows.length === 1 ? "empresa activa" : "empresas activas"}` : undefined}
+          action={canEdit && <Link className="button button-secondary" href={href("empresas", {}, { tipo: "nueva" })}><Plus size={16} aria-hidden="true" /> Nueva empresa</Link>} />
+        {rows.length ? <ul className="data-list study-close-list">
           {rows.map(({ company, period, progress }, index) =>
             <li key={company.id}><Link className="data-row" href={href("cierre", { companyId: company.id })}>
               <span aria-hidden="true" className={`avatar tone-${index % 3}`}>{initials(companyName(company))}</span>
-              <span className="data-main"><strong>{companyName(company)}</strong><small>{period ? `${progress.complete} de ${progress.total} tareas aplicables` : "Período sin iniciar"}</small></span>
-              {period && <><div className="row-progress"><Progress value={progress.percent} label={`Avance de ${companyName(company)}`} /></div>
-                <span className="data-end numbers"><strong>{progress.percent}%</strong>{period.status === "closed" && <small>Cerrado</small>}</span></>}
+              <span className="data-main"><strong>{companyName(company)}</strong><small>{period ? `${progress.complete} de ${progress.total} tareas` : "Período sin iniciar"}</small></span>
+              {period && <div className="study-row-progress">
+                <Progress value={progress.percent} label={`Avance de ${companyName(company)}`} />
+                <span className="numbers">{progress.percent}%</span>
+              </div>}
+              <ChevronRight size={17} className="study-row-chevron" aria-hidden="true" />
             </Link></li>)}
         </ul> : <Empty icon={Building2} title="Todavía no hay empresas activas" text="Agregá una empresa para comenzar su cierre mensual." />}
       </section>
-      <section className="panel">
-        <SectionHeading title="Próximos vencimientos" subtitle={due.length ? `${due.length} obligaciones abiertas` : "Obligaciones cargadas"} icon={CalendarClock} />
-        {due.length ? <ul className="data-list">
-          {due.slice(0, 4).map((entry) => {
+      <section className="panel study-panel">
+        <SectionHeading title="Requiere atención" action={alerts.length > 0 && <Link className="text-button" href={href("auditoria")}>Ver alertas</Link>} />
+        {alerts.length ? <ul className="data-list study-attention-list">{alerts.slice(0, 3).map((alert) => {
+          const company = state.companies.find((entry) => entry.id === alert.companyId);
+          return <li key={alert.id}>
+            <Link className="data-row" href={href(alert.section, { companyId: alert.companyId })}>
+              <span className="alert-marker"><ShieldAlert size={16} aria-hidden="true" /></span>
+              <span className="data-main"><strong>{alert.title}</strong><small>{company ? companyName(company) : alert.type}</small></span>
+              <ChevronRight size={16} className="study-row-chevron" aria-hidden="true" />
+            </Link>
+          </li>;
+        })}</ul> : <Empty icon={Check} title="Sin alertas para este período" />}
+      </section>
+    </div>
+    <div className="study-grid">
+      <section className="panel study-panel">
+        <SectionHeading title="Próximos vencimientos" action={<Link className="text-button" href={href("calendario")}>Abrir calendario</Link>} />
+        {due.length ? <ul className="data-list study-attention-list">
+          {due.slice(0, 3).map((entry) => {
             const company = state.companies.find((company) => company.id === entry.company_id);
             return <li key={entry.id}><div className="data-row">
-              <span className="date-tile" aria-hidden="true"><strong>{Number(entry.due_on.slice(-2))}</strong><small>{dayLabel(entry.due_on, { month: "short" }, locale)}</small></span>
-              <span className="data-main"><strong>{entry.title}</strong><small>{company ? companyName(company) : ""} · {dayLabel(entry.due_on, undefined, locale)}</small></span>
+              <span className="date-tile" aria-label={dayLabel(entry.due_on, undefined, locale)}><strong>{Number(entry.due_on.slice(-2))}</strong><small>{dayLabel(entry.due_on, { month: "short" }, locale)}</small></span>
+              <span className="data-main"><strong>{entry.title}</strong><small>{company ? companyName(company) : ""}</small></span>
               <Badge tone="warning">{entry.status === "filed" ? "Presentado" : "Pendiente"}</Badge>
             </div></li>;
           })}
-        </ul> : <Empty icon={CalendarClock} title="Sin vencimientos próximos" text="Las obligaciones registradas aparecen acá." />}
-        <Link className="text-button mt-4" href={href("calendario")}>Abrir calendario</Link>
+        </ul> : <Empty icon={CalendarClock} title="Sin vencimientos próximos" />}
       </section>
-    </div>
-    <div className="dashboard-grid">
-      <section className="panel">
-        <SectionHeading title="Actividad reciente" icon={Activity} action={<Link className="text-button" href={href("auditoria")}>Ver auditoría</Link>} />
-        {activity.length ? <ul className="data-list">
+      <details className="panel study-panel study-activity">
+        <summary><Activity size={17} aria-hidden="true" /> Actividad reciente<ChevronDown size={17} aria-hidden="true" /></summary>
+        {activity.length ? <ul className="data-list study-attention-list">
           {activity.map((event) => {
             const company = state.companies.find((entry) => entry.id === event.company_id);
             return <li key={event.id}><div className="data-row"><Clock3 size={17} className="muted" aria-hidden="true" /><span className="data-main">
@@ -84,21 +118,9 @@ export function StudyDashboard() {
               <span className="data-end"><small>{dayLabel(event.created_at, undefined, locale)}</small></span></div></li>;
           })}
         </ul> : <Empty icon={Activity} title="Sin actividad registrada" />}
-      </section>
-      <section className="panel">
-        <SectionHeading title="Requieren atención" icon={ShieldAlert} action={<Link className="text-button" href={href("auditoria")}>Ver alertas</Link>} />
-        {alerts.length ? <ul className="data-list">{alerts.slice(0, 3).map((alert) => <li key={alert.id}>
-          <Link className="data-row" href={href(alert.section, { companyId: alert.companyId })}>
-            <span className="data-main"><strong>{alert.title}</strong><small>{alert.type}</small></span>
-          </Link>
-        </li>)}</ul> : <Empty icon={ShieldAlert} title="Sin alertas para este período" />}
-      </section>
+        <Link className="text-button" href={href("auditoria")}>Ver auditoría</Link>
+      </details>
     </div>
-    <section className="panel"><SectionHeading title="Accesos rápidos" /><div className="quick-actions">
-      <Link className="button button-secondary" href={href("cierre")}><ClipboardCheck size={17} /> Abrir checklist mensual</Link>
-      <Link className="button button-secondary" href={href("comprobantes")}><ReceiptText size={17} /> Revisar comprobantes</Link>
-      <Link className="button button-secondary" href={href("calendario")}><CalendarClock size={17} /> Consultar calendario</Link>
-    </div></section>
   </>;
 }
 
@@ -117,8 +139,11 @@ export function CompanyDashboard({ report = false }: { report?: boolean }) {
   }));
 
   return <>
-    <Heading title={report ? "Informes financieros" : companyName(company)} description={`${report ? companyName(company) + " · " : ""}${monthLabel(month, locale)} · ${company.currency}`}
-      actions={<Link className="button button-secondary" href={href("cierre")}><ClipboardCheck size={17} /> Abrir cierre</Link>} />
+    <section className="company-overview">
+      <span aria-hidden="true" className="avatar company-hero-avatar">{initials(companyName(company))}</span>
+      <Heading title={report ? "Informes financieros" : companyName(company)} description={`${report ? companyName(company) + " · " : ""}${monthLabel(month, locale)} · ${company.currency}`}
+        actions={<Link className="button button-secondary" href={href("cierre")}><ClipboardCheck size={17} aria-hidden="true" /> Abrir cierre</Link>} />
+    </section>
     {metrics.otherCurrencies > 0 && <p className="notice">Hay {metrics.otherCurrencies} comprobantes en otras monedas. Los totales de esta pantalla corresponden a {company.currency}.</p>}
     <div className="kpi-grid">
       <Kpi title="Ventas netas" value={amount(metrics.sales)} note={metrics.sales === 0n ? "Margen sobre ventas no aplicable" : "Base neta de comprobantes emitidos"} icon={ReceiptText} tone="positive" />

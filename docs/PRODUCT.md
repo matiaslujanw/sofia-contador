@@ -10,6 +10,7 @@ Sofía acompaña el trabajo contable previo a la registración definitiva en Xub
 - Centro de documentación e importación con mapeo de columnas, vista previa, deduplicación y conservación del original.
 - Plan de cuentas separado por empresa, con códigos, jerarquía, rubro, categoría y estado.
 - Calendario manual, alertas de revisión, indicadores a partir de comprobantes, permisos por organización y bitácora.
+- Recorrido guiado de cuatro pasos dentro de la demo y una edición de prueba como archivo HTML para compartir y usar sin conexión.
 - Caso ficticio Nexo Custodia, una S.A.S. de seguridad privada en Tucumán con compras, bienes de uso, cero ventas confirmadas por el checklist y cero empleados.
 
 ## Próximas entregas

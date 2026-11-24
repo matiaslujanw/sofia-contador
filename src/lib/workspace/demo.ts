@@ -3,6 +3,11 @@ import { defaultClassification, defaultTaskTitles, emptyWorkspace, type Company,
 
 const id = (number: number) => `10000000-0000-4000-8000-${String(number).padStart(12, "0")}`;
 
+export const demoTourCompanyId = id(10);
+export const demoTourPeriodId = id(100);
+export const demoTourTaskId = id(1013);
+export const demoTourVoucherId = id(500);
+
 export function createDemoWorkspace(month: string): WorkspaceState {
   const organization: Organization = { id: id(1), name: "Estudio Sofía", locale: "es-AR", currency: "ARS", timezone: "America/Argentina/Tucuman", role: "owner" };
   const companyData = [

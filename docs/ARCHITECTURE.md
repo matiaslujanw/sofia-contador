@@ -6,6 +6,7 @@
 - **Workspace** reúne datos del estudio, componentes de navegación y módulos de interfaz. Las validaciones Zod son compartidas entre la demo y el servidor. El dashboard calcula los indicadores con funciones determinísticas.
 - **Importadores** leen CSV, XLS y XLSX. En la app conectada se procesa la vista previa en el navegador y se repite el análisis en el servidor sobre el archivo original, con las columnas ya elegidas. Las reglas SQL validan lo persistido. [Formatos](IMPORT_FORMATS.md)
 - **Demostración** utiliza metadatos en localStorage y originales en IndexedDB. Es una experiencia individual de desarrollo. Al conectar Supabase se usa el conjunto de datos privado del estudio.
+- **Demo portable.** Vite empaqueta la misma interfaz y operaciones sintéticas en un HTML. La navegación usa el fragmento de URL y los adaptadores del build excluyen las acciones de servidor. Al abrir el archivo local, los cambios y archivos viven en la memoria de la pestaña.
 - **Rendimiento inicial.** Las consultas SQL tienen paginación por entidad y se sirven juntas para el estudio seleccionado. Para estudios más grandes, mover a consultas por módulo y período antes de añadir conjuntos como extractos, asientos y mayores.
 - **Instalación.** El manifiesto y los íconos están preparados para la experiencia instalable. Los permisos y archivos privados se consultan en línea.
 

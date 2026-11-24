@@ -1,4 +1,5 @@
 import { previewImport, readSource, type ColumnMapping, type ImportKind } from "@/lib/imports";
+import { readDemoStorage, writeDemoStorage } from "./demo-storage";
 import { verifyDocument } from "./documents";
 import { cents, taskProgress } from "./format";
 import { defaultClassification, defaultTaskTitles, type AuditEvent, type Document, type Period, type WorkspaceState } from "./model";
@@ -16,7 +17,7 @@ export function subscribeLocal(callback: () => void) {
   };
 }
 
-export const localSnapshot = () => localStorage.getItem(key);
+export const localSnapshot = () => readDemoStorage(key);
 export const emptyLocalSnapshot = () => null;
 
 export function decodeLocal(snapshot: string | null, initial: WorkspaceState): WorkspaceState {
@@ -26,7 +27,7 @@ export function decodeLocal(snapshot: string | null, initial: WorkspaceState): W
 
 function changeLocal(initial: WorkspaceState, update: (state: WorkspaceState) => WorkspaceState) {
   const data = update(decodeLocal(localSnapshot(), initial));
-  localStorage.setItem(key, JSON.stringify(data));
+  writeDemoStorage(key, JSON.stringify(data));
   window.dispatchEvent(new Event(changed));
 }
 
@@ -163,6 +164,7 @@ export function mutateLocal(initial: WorkspaceState, input: Command) {
 }
 
 type StoredDocument = { bytes: ArrayBuffer; mime: string };
+const portableDocuments = new Map<string, StoredDocument>();
 
 async function fileStore<T>(mode: IDBTransactionMode, operation: (store: IDBObjectStore) => IDBRequest<T>) {
   const database = await new Promise<IDBDatabase>((resolve, reject) => {
@@ -185,7 +187,9 @@ async function writeLocalDocument(initial: WorkspaceState, periodId: string, cat
   const verified = await verifyDocument(file);
   const id = crypto.randomUUID();
   const original: StoredDocument = { bytes: await file.arrayBuffer(), mime: verified.mime };
-  await fileStore("readwrite", (store) => store.put(original, id));
+  const portable = window.location.protocol === "file:";
+  if (portable) portableDocuments.set(id, original);
+  else await fileStore("readwrite", (store) => store.put(original, id));
   try {
     changeLocal(initial, (state) => {
       const period = openPeriod(state, periodId);
@@ -197,7 +201,8 @@ async function writeLocalDocument(initial: WorkspaceState, periodId: string, cat
       return update ? update(next, document) : withEvent(next, "documents", id, period.company_id, period.id, "INSERT");
     });
   } catch (error) {
-    await fileStore("readwrite", (store) => store.delete(id)).catch(() => undefined);
+    if (portable) portableDocuments.delete(id);
+    else await fileStore("readwrite", (store) => store.delete(id)).catch(() => undefined);
     throw error;
   }
   return { id };
@@ -208,7 +213,8 @@ export function uploadLocalDocument(initial: WorkspaceState, periodId: string, c
 }
 
 export async function downloadLocalDocument(id: string) {
-  const stored = await fileStore("readonly", (store) => store.get(id)) as StoredDocument | Blob | undefined;
+  const stored = window.location.protocol === "file:" ? portableDocuments.get(id)
+    : await fileStore("readonly", (store) => store.get(id)) as StoredDocument | Blob | undefined;
   const original = requireEntry(stored, "El archivo no está disponible en este navegador.");
   return URL.createObjectURL(original instanceof Blob ? original : new Blob([original.bytes], { type: original.mime }));
 }

@@ -10,21 +10,24 @@ Inter Variable se distribuye con la aplicación. El texto de interfaz usa españ
 
 | Uso | Color |
 | --- | --- |
-| Fondo | `#10141C` |
-| Superficie | `#1C2431` |
-| Marca y acción principal | `#818CF8` |
+| Fondo de la aplicación | `#11131C` |
+| Superficie | `#1A1E2B` |
+| Identidad del símbolo | `#818CF8` |
+| Acción principal | `#B9ACFF` |
 | Confirmación | `#2DD4BF` |
 | Atención | `#FBBF24` |
 | Error | `#F87171` |
 | Texto principal | `#F8FAFC` |
 | Texto secundario | `#A0AEC0` |
-| Bordes de panel | `#303846` |
+| Bordes de panel | `#31374A` |
 
 Los tokens de `src/app/globals.css` definen además superficies suaves, focos y colores secundarios de cada estado. Los indicadores acompañan el color con texto. La acción principal usa texto oscuro sobre el color de marca.
 
 ## Estructura y componentes
 
-- La barra superior mantiene visibles los selectores del contexto de trabajo. Las páginas muestran un título y las acciones disponibles para ese contexto.
+- La barra superior mantiene visibles los selectores del contexto de trabajo. La navegación muestra las tareas frecuentes y agrupa la configuración, el plan de cuentas, los informes y la auditoría en **Más herramientas**.
+- El inicio pone el avance del mes en primer plano y reúne los pendientes en una fila de indicadores. La lista de empresas permite abrir cada cierre. La actividad se consulta al expandir su panel.
+- El recorrido de demostración muestra un paso por vez junto a la pantalla real. Abre las fichas de ejemplo con sus diálogos habituales y permite salir o continuar.
 - Los paneles agrupan indicadores, listas y gráficos. Las tablas conservan encabezados semánticos, ordenan los datos y alinean importes a la derecha. En espacios angostos, el desplazamiento horizontal queda dentro de la tabla.
 - `src/components/workspace-ui.tsx` comparte encabezados, campos, etiquetas de estado, estados vacíos, barras de avance y diálogos. Los formularios mantienen visibles el estado de guardado y los mensajes de validación. Los diálogos usan Radix UI para manejar el foco y el cierre con Escape.
 - Los gráficos financieros acompañan los valores con ejes, leyenda o información al interactuar. La falta de datos se comunica explícitamente en las métricas.

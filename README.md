@@ -6,7 +6,7 @@ Espacio privado para estudios contables argentinos. Esta primera entrega permite
 
 ## Probar en local
 
-Con Node.js 22 o 24, ejecutá estos comandos en la carpeta del proyecto:
+Con Node.js 22.12 o una versión posterior compatible, ejecutá estos comandos en la carpeta del proyecto:
 
 ```sh
 npm ci
@@ -14,6 +14,12 @@ SOFIA_DEMO_MODE=1 npm run dev
 ```
 
 Abrí [Sofía en localhost](http://127.0.0.1:3000). La demo comienza con empresas ficticias y guarda los cambios en el navegador. Incluye archivos de plantilla descargables en **Documentación → Importaciones**. Usá únicamente material sintético.
+
+## Compartir el recorrido
+
+El enlace **Recorrido guiado** en el encabezado de la demo lleva por cuatro ejercicios en Nexo Custodia. También podés abrir [el inicio del recorrido en localhost](http://127.0.0.1:3000/inicio?recorrido=0) mientras esté corriendo el servidor de desarrollo.
+
+Para compartirlo como un solo archivo, generá la edición portable con `npm run build:demo`. Enviá `demo-dist/Sofia-demo.html` para que la persona lo guarde y lo abra en un navegador de escritorio. La demo funciona sin conexión, abre el recorrido automáticamente y permite cambiar el checklist, revisar una compra e importar un CSV incluido. En esta edición, el espacio de prueba vuelve a su estado inicial al recargar o volver a abrir el archivo.
 
 ## Conectar Supabase y Vercel
 
@@ -23,7 +29,7 @@ Abrí [Sofía en localhost](http://127.0.0.1:3000). La demo comienza con empresa
 4. Con el repositorio en GitHub, importalo en Vercel como proyecto Next.js, seleccioná Node.js 24 y cargá las variables del ambiente. Definí el dominio canónico y configurá el mismo origen en Supabase.
 5. Antes de cargar archivos reales, probá ingreso, recuperación, permisos entre dos organizaciones y carga y descarga privada en el entorno de destino. [Pruebas](docs/TESTING.md)
 
-La demo está limitada al servidor de desarrollo en loopback. El modo conectado valida sesión y permisos y conserva los originales en Supabase Storage.
+La demo integrada en Next.js está limitada al servidor de desarrollo en loopback. El modo conectado valida sesión y permisos y conserva los originales en Supabase Storage.
 
 ## Comprobaciones
 
@@ -32,6 +38,7 @@ npm run lint
 npm run typecheck
 npm test
 npm run build
+npm run build:demo
 npx playwright install chromium
 npm run test:e2e
 supabase/tests/run-postgres.sh

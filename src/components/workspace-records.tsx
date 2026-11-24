@@ -3,6 +3,7 @@
 import { Download, FileSpreadsheet, FileText, FileUp, FolderOpen, ListTree, Plus, ReceiptText, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { demoTourVoucherId } from "@/lib/workspace/demo";
 import { documentExtensions } from "@/lib/workspace/documents";
 import { companyName, cuitLabel, dayLabel, fileSize, money, monthLabel } from "@/lib/workspace/format";
 import { accountKinds, documentCategories, paymentStatuses, reviewStatuses, xubioStatuses, type Account, type AccountValues, type Voucher, type VoucherClassification } from "@/lib/workspace/model";
@@ -79,14 +80,15 @@ function VoucherForm({ voucher, editable, close }: { voucher: Voucher; editable:
   </Modal>;
 }
 
-export function VouchersPage() {
+export function VouchersPage({ guide = false, closeGuide }: { guide?: boolean; closeGuide?: () => void }) {
   const { company, period, state, month, locale, href, canEdit } = useWorkspace();
   const [direction, setDirection] = useState<Voucher["direction"]>("purchase");
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("");
-  const [selected, setSelected] = useState<Voucher | null>(null);
+  const [selection, setSelected] = useState<Voucher | null>(null);
   const editable = canEdit && period?.status === "open" && company?.status === "active";
   const all = state.vouchers.filter((entry) => entry.period_id === period?.id);
+  const selected = selection ?? (closeGuide ? all.find((entry) => entry.id === demoTourVoucherId) : null);
   const vouchers = all.filter((entry) => entry.direction === direction && (!status || entry.review_status === status) &&
     [entry.counterparty_name, entry.counterparty_cuit, cuitLabel(entry.counterparty_cuit), entry.receipt_type, entry.receipt_number].join(" ").toLowerCase().includes(query.toLowerCase()))
     .sort((a, b) => b.date.localeCompare(a.date) || b.receipt_number - a.receipt_number);
@@ -104,7 +106,7 @@ export function VouchersPage() {
       </div>
       {vouchers.length ? <div className="table-wrap"><table>
         <thead><tr><th>Fecha</th><th>Comprobante</th><th>{direction === "purchase" ? "Proveedor" : "Cliente"}</th><th>Revisión</th><th className="cell-numeric">Total</th><th className="text-right">Acciones</th></tr></thead>
-        <tbody>{vouchers.map((entry) => <tr key={entry.id}><td className="cell-nowrap numbers">{dayLabel(entry.date, { dateStyle: "short" }, locale)}</td>
+        <tbody>{vouchers.map((entry) => <tr key={entry.id} className={guide && entry.id === demoTourVoucherId ? "tour-target-row" : undefined}><td className="cell-nowrap numbers">{dayLabel(entry.date, { dateStyle: "short" }, locale)}</td>
           <td className="cell-nowrap">{entry.receipt_type}<small className="numbers">{String(entry.point_of_sale).padStart(4, "0")}-{String(entry.receipt_number).padStart(8, "0")}</small></td>
           <td className="cell-main">{entry.counterparty_name || "Sin identificar"}<small>{cuitLabel(entry.counterparty_cuit)}</small></td>
           <td><Badge tone={entry.review_status === "approved" ? "positive" : entry.review_status === "review" ? "warning" : "neutral"} dot>{reviewStatuses[entry.review_status]}</Badge></td>
@@ -114,7 +116,7 @@ export function VouchersPage() {
       </table></div> : <Empty icon={ReceiptText} title={query || status ? "Sin comprobantes para estos filtros" : `Sin comprobantes de ${direction === "purchase" ? "compras" : "ventas"}`}
         text={editable && !query && !status ? "Podés importar una planilla y revisar sus columnas antes de guardar." : undefined} />}
     </section>}
-    {selected && <VoucherForm voucher={selected} editable={editable} close={() => setSelected(null)} />}
+    {selected && <VoucherForm voucher={selected} editable={editable} close={() => { setSelected(null); closeGuide?.(); }} />}
   </>;
 }
 

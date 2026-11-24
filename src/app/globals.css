@@ -343,3 +343,31 @@ td.cell-nowrap, .cell-numeric { white-space: nowrap; }
   .tour-preview { grid-template-columns: minmax(0, 1fr); }
   .tour-panel-footer { row-gap: 9px; }
 }
+
+.workspace-guide-entry { flex: none; }
+.topbar > .workspace-guide-entry:last-child { margin-inline-start: auto; }
+.top-controls + .workspace-guide-entry:last-child { margin-inline-start: 0; }
+.onboarding-guide-steps { display: grid; gap: 12px; }
+.onboarding-guide-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 5px 12px; }
+.onboarding-sections h3 { font-size: 1rem; font-weight: 700; }
+.onboarding-guide-heading span { color: var(--muted); font-size: .85rem; }
+.onboarding-checklist { display: grid; gap: 6px; list-style: none; margin: 0; padding: 0; }
+.onboarding-checklist li { display: flex; align-items: flex-start; gap: 11px; padding: 10px; border: 1px solid transparent; border-radius: 9px; }
+.onboarding-checklist li[aria-current="step"] { border-color: #544477; background: #282139; }
+.onboarding-checklist h4 { margin: 0; font-size: .91rem; font-weight: 690; }
+.onboarding-checklist p, .onboarding-sections dd { margin: 4px 0 0; color: var(--muted); font-size: .88rem; line-height: 1.45; }
+.onboarding-checklist .button { margin-top: 9px; }
+.onboarding-step-number { display: grid; place-items: center; flex: none; width: 27px; height: 27px; border-radius: 50%; background: #37304c; color: #ece3ff; font-size: .8rem; font-weight: 700; }
+.onboarding-step-number[data-done="true"] { background: #1c3b36; color: #7ce7d3; }
+.onboarding-sections dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin: 6px 0 0; }
+.onboarding-sections dl > div { padding: 8px; border-radius: 8px; min-width: 0; }
+.onboarding-sections dl > div[data-current="true"] { background: #282139; }
+.onboarding-sections dt { font-size: .88rem; font-weight: 680; }
+.onboarding-sections dt a { color: var(--accent); }
+.onboarding-sections dt a:hover { text-decoration: underline; }
+@media (max-width: 660px) {
+  .top-controls + .workspace-guide-entry:last-child { margin-inline-start: auto; }
+}
+@media (max-width: 495px) {
+  .onboarding-sections dl { grid-template-columns: minmax(0, 1fr); }
+}

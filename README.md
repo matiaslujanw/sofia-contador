@@ -15,7 +15,11 @@ SOFIA_DEMO_MODE=1 npm run dev
 
 Abrí [Sofía en localhost](http://127.0.0.1:3000). La demo comienza con empresas ficticias y guarda los cambios en el navegador. Incluye archivos de plantilla descargables en **Documentación → Importaciones**. Usá únicamente material sintético.
 
-## Compartir el recorrido
+## Primeros pasos en la aplicación
+
+Después de iniciar sesión, Sofía indica el próximo paso según los datos del estudio. La guía acompaña la creación del estudio, la primera empresa, la apertura del mes y la importación y revisión de comprobantes. **Guía de Sofía** está siempre disponible en el encabezado y explica para qué sirve cada sección.
+
+## Compartir el recorrido de demostración
 
 El enlace **Recorrido guiado** en el encabezado de la demo lleva por cuatro ejercicios en Nexo Custodia. También podés abrir [el inicio del recorrido en localhost](http://127.0.0.1:3000/inicio?recorrido=0) mientras esté corriendo el servidor de desarrollo.
 

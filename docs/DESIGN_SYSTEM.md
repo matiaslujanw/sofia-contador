@@ -27,6 +27,7 @@ Los tokens de `src/app/globals.css` definen además superficies suaves, focos y 
 
 - La barra superior mantiene visibles los selectores del contexto de trabajo. La navegación muestra las tareas frecuentes y agrupa la configuración, el plan de cuentas, los informes y la auditoría en **Más herramientas**.
 - El inicio pone el avance del mes en primer plano y reúne los pendientes en una fila de indicadores. La lista de empresas permite abrir cada cierre. La actividad se consulta al expandir su panel.
+- En la aplicación conectada, la guía refleja las altas y revisiones reales del estudio. El siguiente paso queda visible durante la configuración y el encabezado conserva el acceso a la guía y al mapa de secciones.
 - El recorrido de demostración muestra un paso por vez junto a la pantalla real. Abre las fichas de ejemplo con sus diálogos habituales y permite salir o continuar.
 - Los paneles agrupan indicadores, listas y gráficos. Las tablas conservan encabezados semánticos, ordenan los datos y alinean importes a la derecha. En espacios angostos, el desplazamiento horizontal queda dentro de la tabla.
 - `src/components/workspace-ui.tsx` comparte encabezados, campos, etiquetas de estado, estados vacíos, barras de avance y diálogos. Los formularios mantienen visibles el estado de guardado y los mensajes de validación. Los diálogos usan Radix UI para manejar el foco y el cierre con Escape.

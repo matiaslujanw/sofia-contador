@@ -23,6 +23,7 @@
 | P0 | Verificado | Inicio centrado en el avance del mes, pendientes y acceso a los cierres de cada empresa |
 | P0 | Verificado | Menú con tareas frecuentes visibles, herramientas secundarias desplegables y navegación adaptable |
 | P0 | Verificado | Recorrido de cuatro pasos reanudable y ejercitado sobre los registros de la demo |
+| P0 | Verificado | Guía en la aplicación autenticada con próximos pasos según los datos del estudio y explicación de todas las secciones |
 | P0 | Verificado | HTML de prueba sin conexión, con archivo de muestra y persistencia durante la sesión |
 
 El ingreso conectado acepta nombre de usuario para cuentas con alias interno y correo para cuentas con buzón real. Los alias se verifican con Supabase Auth y la recuperación por correo requiere un buzón real.
@@ -51,3 +52,5 @@ El ingreso conectado acepta nombre de usuario para cuentas con alias interno y c
 - El registro de decisiones está en [Decisiones](docs/DECISIONS.md). Pendientes de verificación externa en [Pruebas](docs/TESTING.md).
 
 - En el rediseño pasaron los builds de Next.js y de la demo portable, 32 pruebas unitarias y 13 recorridos Playwright tanto en Chromium como en WebKit. Se revisaron el inicio y el tutorial en anchos de escritorio, tablet y teléfono.
+
+- La guía autenticada pasó las pruebas de progreso, permisos y secciones. Se verificó en navegador con una cuenta conectada, teclado y pantalla móvil.

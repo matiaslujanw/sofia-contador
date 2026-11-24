@@ -3,25 +3,27 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import clsx from "clsx";
 import {
-  Building2, CalendarDays, ChevronDown, ClipboardCheck, FileText, FlaskConical, House,
+  Building2, CalendarDays, ChevronDown, ClipboardCheck, Compass, FileText, FlaskConical, House,
   LayoutList, LogOut, Menu, ReceiptText, Settings, ShieldCheck, X, ChartNoAxesCombined,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useSyncExternalStore } from "react";
+import { useRef, useState, useSyncExternalStore, type MouseEventHandler } from "react";
 import { signOut } from "@/lib/supabase/auth-actions";
 import { confirmWorkspaceImport, downloadWorkspaceDocument, mutateWorkspace, uploadWorkspaceDocument } from "@/lib/workspace/actions";
 import { demoTourCompanyId, demoTourPeriodId, demoTourTaskId } from "@/lib/workspace/demo";
 import { companyName, initials, monthLabel, shiftMonth } from "@/lib/workspace/format";
 import { confirmLocalImport, decodeLocal, downloadLocalDocument, emptyLocalSnapshot, localSnapshot, mutateLocal, subscribeLocal, uploadLocalDocument } from "@/lib/workspace/local";
 import type { WorkspaceState } from "@/lib/workspace/model";
+import { getOnboarding } from "@/lib/workspace/onboarding";
 import { sections, workspaceHref, type Section, type Selection } from "@/lib/workspace/routes";
 import { monthSchema } from "@/lib/workspace/validation";
 import { AuditPage, CalendarPage, SettingsPage } from "./workspace-admin";
 import { WorkspaceContext, type Context } from "./workspace-context";
 import { CompanyDashboard, StudyDashboard } from "./workspace-dashboard";
 import { AccountsPage, DocumentsPage, VouchersPage } from "./workspace-records";
+import { NextWorkspaceStep, WorkspaceGuide } from "./workspace-onboarding";
 import { ClosingPage, CompaniesPage } from "./workspace-operations";
 import { Field, Input, Modal, Select } from "./workspace-ui";
 import { TourEntry, WorkspaceTour } from "./workspace-tour";
@@ -51,6 +53,12 @@ export function Workspace({ initial, section, mode, email, month, today, company
   const [drawer, setDrawer] = useState(false);
   const [monthPicker, setMonthPicker] = useState(false);
   const [message, setMessage] = useState("");
+  const [guideOpen, setGuideOpen] = useState(false);
+  const guideTrigger = useRef<HTMLButtonElement>(null);
+  const openGuide: MouseEventHandler<HTMLButtonElement> = (event) => {
+    guideTrigger.current = event.currentTarget;
+    setGuideOpen(true);
+  };
   const company = state.companies.find((company) => company.id === companyId);
   const period = state.periods.find((entry) => entry.company_id === company?.id && entry.month.slice(0, 7) === month);
   const organization = state.organization;
@@ -67,6 +75,7 @@ export function Workspace({ initial, section, mode, email, month, today, company
   const scopeQuery = tourStep === null ? continuing : { ...continuing, recorrido: String(tourStep) };
   const href = (target: Section, override?: Partial<Selection>, extra?: Record<string, string>) =>
     workspaceHref(target, { ...selection, ...override }, extra);
+  const guideProps = { steps: mode === "auth" ? getOnboarding(state, selection) : [], section, selection, purpose, href };
   const months = [...new Set([month, ...Array.from({ length: 13 }, (_, index) => shiftMonth(today.slice(0, 7), 2 - index)), ...state.periods.map((record) => record.month.slice(0, 7))])].sort().reverse();
 
   function notify(value: string) {
@@ -222,8 +231,12 @@ export function Workspace({ initial, section, mode, email, month, today, company
             </label>
           </div>}
           {mode === "demo" && tourCompany && tourStep === null && <TourEntry selection={sample} />}
+          {mode === "auth" && <button type="button" className="tour-entry workspace-guide-entry" aria-haspopup="dialog" onClick={openGuide}>
+            <Compass size={17} aria-hidden="true" /> Guía de Sofía
+          </button>}
         </header>
         <main id="contenido" className="workspace-main" tabIndex={-1}>
+          {mode === "auth" && <NextWorkspaceStep {...guideProps} openGuide={openGuide} />}
           {mode === "demo" && tourCompany && tourStep !== null && <WorkspaceTour
             step={tourStep} sample={sample} current={selection} section={section} continuing={continuing} portable={portable}
             companyName={companyName(tourCompany)} taskTitle={tourTask?.title ?? "la tarea de ejemplo"} sampleSelected={sampleSelected}
@@ -235,6 +248,7 @@ export function Workspace({ initial, section, mode, email, month, today, company
         </main>
       </div>
     </div>
+    {mode === "auth" && guideOpen && <WorkspaceGuide {...guideProps} close={() => setGuideOpen(false)} restoreFocus={() => guideTrigger.current?.focus()} />}
     {monthPicker && <Modal title="Seleccionar período" description="Elegí el mes contable que querés consultar." close={() => setMonthPicker(false)}>
       <form onSubmit={(event) => {
         event.preventDefault();

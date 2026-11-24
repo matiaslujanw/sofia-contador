@@ -28,7 +28,7 @@ export function SettingsPage() {
   const { organization, members } = state;
   const isOwner = organization?.role === "owner";
   const dismiss = () => setDialog(null);
-  const createButton = <button type="button" className="button button-primary" onClick={() => setDialog({ type: "create" })}>
+  const createButton = <button id="crear-organizacion" type="button" className="button button-primary" onClick={() => setDialog({ type: "create" })}>
     <Plus size={17} aria-hidden="true" /> Crear organización
   </button>;
 
@@ -146,7 +146,7 @@ export function CalendarPage() {
   }).sort((a, b) => a.due_on.localeCompare(b.due_on) || a.title.localeCompare(b.title));
   const activeCompanies = state.companies.filter((entry) => entry.status === "active" && (!company || company.id === entry.id));
   const canCreate = canEdit && activeCompanies.some((entry) => monthlyPeriods.find((record) => record.company_id === entry.id)?.status !== "closed");
-  const createButton = <button type="button" className="button button-primary" onClick={() => setDialog("new")}><Plus size={17} aria-hidden="true" /> Nuevo vencimiento</button>;
+  const createButton = <button id="crear-organizacion" type="button" className="button button-primary" onClick={() => setDialog("new")}><Plus size={17} aria-hidden="true" /> Nuevo vencimiento</button>;
 
   return <>
     <Heading title="Calendario fiscal" description={`${monthLabel(month, locale)} · ${company ? companyName(company) : "Vista del estudio"}`} actions={canCreate ? createButton : undefined} />

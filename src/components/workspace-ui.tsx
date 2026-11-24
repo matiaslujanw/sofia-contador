@@ -58,9 +58,14 @@ export function Search({ value, onChange, label }: { value: string; onChange: (v
   return <Input type="search" className="search" aria-label={label} placeholder={label} value={value} onChange={(event) => onChange(event.target.value)} />;
 }
 
-export function Modal({ title, description, close, children }: { title: string; description: string; close: () => void; children: ReactNode }) {
+export function Modal({ title, description, close, children, restoreFocus }: {
+  title: string; description: string; close: () => void; children: ReactNode; restoreFocus?: () => void;
+}) {
   return <Dialog.Root open onOpenChange={(open) => { if (!open) close(); }}>
-    <Dialog.Portal><Dialog.Overlay className="modal-overlay" /><Dialog.Content className="modal-content">
+    <Dialog.Portal><Dialog.Overlay className="modal-overlay" /><Dialog.Content className="modal-content" onCloseAutoFocus={restoreFocus ? (event) => {
+      event.preventDefault();
+      restoreFocus();
+    } : undefined}>
       <div className="modal-heading"><div><Dialog.Title>{title}</Dialog.Title><Dialog.Description>{description}</Dialog.Description></div>
         <Dialog.Close asChild><button type="button" className="icon-button" aria-label="Cerrar"><X size={20} /></button></Dialog.Close></div>
       {children}

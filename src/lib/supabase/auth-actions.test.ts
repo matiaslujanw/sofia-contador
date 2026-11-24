@@ -39,9 +39,24 @@ beforeEach(() => vi.resetAllMocks());
 
 describe("acciones de autenticación", () => {
   it("valida los datos de ingreso antes de consultar Supabase", async () => {
-    const result = await signIn(null, fields({ email: "incorrecto", password: "ejemplo" }));
+    const result = await signIn(null, fields({ identifier: "inválido!", password: "ejemplo" }));
     expect(result?.kind).toBe("error");
     expect(mocks.auth.signInWithPassword).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [" Conta_Prueba ", "conta_prueba@cuentas.sofia.invalid"],
+    ["conta@example.com", "conta@example.com"],
+  ])("acepta el identificador %s dentro del mismo flujo de autenticación", async (identifier, email) => {
+    mocks.auth.signInWithPassword.mockResolvedValue({ data: { session: {} }, error: null });
+    await expect(signIn(null, fields({ identifier, password: "clave de ejemplo" }))).rejects.toThrow("redirect /inicio");
+    expect(mocks.auth.signInWithPassword).toHaveBeenCalledWith({ email, password: "clave de ejemplo" });
+  });
+
+  it("conserva la respuesta genérica de recuperación para alias internos", async () => {
+    const response = await requestPasswordRecovery(null, fields({ email: "conta_prueba@cuentas.sofia.invalid" }));
+    expect(response?.kind).toBe("success");
+    expect(mocks.auth.resetPasswordForEmail).not.toHaveBeenCalled();
   });
 
   it("usa el origen configurado y oculta diferencias según el correo", async () => {

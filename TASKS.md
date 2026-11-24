@@ -25,6 +25,8 @@
 | P0 | Verificado | Recorrido de cuatro pasos reanudable y ejercitado sobre los registros de la demo |
 | P0 | Verificado | HTML de prueba sin conexión, con archivo de muestra y persistencia durante la sesión |
 
+El ingreso conectado acepta nombre de usuario para cuentas con alias interno y correo para cuentas con buzón real. Los alias se verifican con Supabase Auth y la recuperación por correo requiere un buzón real.
+
 ## Trabajo pendiente
 
 | Prioridad | Fase | Estado | Entregable y dependencia |

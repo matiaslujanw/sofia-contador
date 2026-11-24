@@ -13,20 +13,26 @@ export type AuthFormState = {
 } | null;
 
 const emailSchema = z.string().trim().email().max(254);
-const signInSchema = z.object({ email: emailSchema, password: z.string().min(1).max(512) });
+const aliasDomain = "cuentas.sofia.invalid";
+const userNameSchema = z.string().trim().toLowerCase().regex(/^[a-z0-9][a-z0-9_-]{2,31}$/)
+  .transform((name) => `${name}@${aliasDomain}`);
+const signInSchema = z.object({
+  identifier: z.union([emailSchema, userNameSchema]),
+  password: z.string().min(1).max(512),
+});
 const newPasswordSchema = z.object({
   password: z.string().min(12).refine((value) => Buffer.byteLength(value, "utf8") <= 72),
   confirmation: z.string(),
 }).refine(({ password, confirmation }) => password === confirmation);
 
 export async function signIn(_: AuthFormState, formData: FormData): Promise<AuthFormState> {
-  const input = signInSchema.safeParse({ email: formData.get("email"), password: formData.get("password") });
-  if (!input.success) return { kind: "error", message: "Revisá tu correo electrónico y contraseña." };
+  const input = signInSchema.safeParse({ identifier: formData.get("identifier"), password: formData.get("password") });
+  if (!input.success) return { kind: "error", message: "Revisá tu usuario o correo electrónico y contraseña." };
 
   const supabase = await createSupabaseServerClient();
   if (!supabase) return { kind: "error", message: "El acceso todavía no está configurado." };
 
-  const { error, data } = await supabase.auth.signInWithPassword(input.data);
+  const { error, data } = await supabase.auth.signInWithPassword({ email: input.data.identifier, password: input.data.password });
   if (error || !data.session) return { kind: "error", message: "No pudimos ingresar. Revisá tus datos e intentá de nuevo." };
 
   await clearRecoveryProof();
@@ -41,7 +47,9 @@ export async function requestPasswordRecovery(_: AuthFormState, formData: FormDa
   const supabase = await createSupabaseServerClient();
   if (!supabase || !config) return { kind: "error", message: "La recuperación de contraseña todavía no está configurada." };
 
-  await supabase.auth.resetPasswordForEmail(email.data, { redirectTo: `${config.origin}/auth/confirm` });
+  if (!email.data.toLowerCase().endsWith(`@${aliasDomain}`)) {
+    await supabase.auth.resetPasswordForEmail(email.data, { redirectTo: `${config.origin}/auth/confirm` });
+  }
 
   return { kind: "success", message: "Si el correo está habilitado, vas a recibir un enlace para cambiar la contraseña." };
 }

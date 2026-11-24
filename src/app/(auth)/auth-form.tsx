@@ -17,7 +17,7 @@ const pendingLabels = { signin: "Ingresando…", request: "Enviando…", reset: 
 export function AuthForm(props: AuthFormProps) {
   const { mode } = props;
   const [state, action, pending] = useActionState(actions[mode], null);
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
 
   return (
     <form className={styles.form} action={action}>
@@ -28,11 +28,12 @@ export function AuthForm(props: AuthFormProps) {
       </>}
       {(mode === "signin" || mode === "request") && (
         <label className={styles.field}>
-          Correo electrónico
+          {mode === "signin" ? "Usuario o correo electrónico" : "Correo electrónico"}
           <input
-            type="email" name="email" autoComplete={mode === "signin" ? "username" : "email"}
-            required maxLength={254} placeholder="nombre@estudio.com.ar" value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            type={mode === "signin" ? "text" : "email"} name={mode === "signin" ? "identifier" : "email"}
+            autoComplete={mode === "signin" ? "username" : "email"} autoCapitalize="none" spellCheck={false}
+            required maxLength={254} placeholder={mode === "signin" ? "Usuario o correo" : "nombre@estudio.com.ar"}
+            value={identifier} onChange={(event) => setIdentifier(event.target.value)}
           />
         </label>
       )}

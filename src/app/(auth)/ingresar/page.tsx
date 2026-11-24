@@ -22,7 +22,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
         <p>Explorá el espacio de trabajo con empresas y movimientos de ejemplo.</p>
         <Link href="/inicio" className={styles.submit}>Abrir demostración</Link>
       </> : configured ? <>
-        <p>Ingresá con el correo habilitado para tu estudio.</p>
+        <p>Usá el usuario o correo habilitado para tu estudio.</p>
         {clave === "actualizada" && <p role="status" className={styles.success}>Contraseña actualizada. Ya podés ingresar.</p>}
         <AuthForm mode="signin" />
         <Link href="/recuperar-clave" className={styles.textLink}>¿Olvidaste tu contraseña?</Link>

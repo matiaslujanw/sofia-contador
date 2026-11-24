@@ -16,6 +16,10 @@
 7. Iniciá sesión en `/ingresar` y creá el estudio. La creadora recibe el rol `owner`. Para incorporar a otra persona, primero creá su usuario en Supabase Auth. Usá su UUID al asignarle un rol desde la organización.
 8. Antes de incorporar documentación real, repetí el ingreso, la recuperación por correo, el cierre de sesión y las verificaciones de aislamiento en el entorno destinado al estudio. Usá cuentas de prueba en dos organizaciones distintas, incluyendo un miembro de solo lectura.
 
+## Ingreso con usuario
+
+Las cuentas provisionadas con un alias interno usan en Supabase Auth la dirección `<usuario>@cuentas.sofia.invalid`, confirmada por administración. El inicio de sesión admite ese nombre de usuario o una dirección de correo habilitada. Para que una persona recupere su clave por correo, asignale una dirección real y usá esa dirección para el ingreso.
+
 ## Sesiones y autorización
 
 - El servidor comprueba los claims de Supabase en páginas y acciones privadas. El proxy renueva la sesión cuando corresponde y devuelve las respuestas privadas con `Cache-Control: private, no-store`.

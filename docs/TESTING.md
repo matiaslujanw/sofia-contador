@@ -14,3 +14,7 @@
 Creá dos organizaciones de prueba y miembros con diferentes roles. Comprobá acceso propio, rechazo de operaciones cruzadas, ingreso desde HTTPS, cookies renovadas, cierre de sesión, entrega del correo de recuperación y vencimiento del enlace firmado de Storage. Subí un documento sintético, verificá descarga autorizada y confirmá que otro estudio carece de acceso. Registrá el resultado en el tracker.
 
 Para admitir archivos de ARCA, Comafi y Xubio, repetí con muestras no sensibles, contrastá totales y saldos con el sistema de origen y documentá la versión del formato. En iPad físico comprobá navegación, fecha/período, carga desde Archivos, lectura y descarga.
+
+## Control mensual e IVA preliminar
+
+Se agregaron cuatro pruebas unitarias de aislamiento por estudio/empresa/período, crédito indefinido frente a cero, notas de crédito, exclusión de otras monedas, centavos grandes y CSV con fórmulas neutralizadas. La suite completa pasa 42 pruebas. Dos recorridos nuevos en Chromium verifican agregado/persistencia de TEM, descarga IVA, consulta móvil, período cerrado y período sin iniciar; pasan junto con cuatro recorridos existentes del workspace. Builds Next.js y portable aprobados; revisión visual del portable en escritorio y 390 px. Integraciones ARCA/Xubio y entorno Supabase real quedan fuera de esta validación.

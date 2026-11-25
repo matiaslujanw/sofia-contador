@@ -24,13 +24,14 @@ import { WorkspaceContext, type Context } from "./workspace-context";
 import { CompanyDashboard, StudyDashboard } from "./workspace-dashboard";
 import { AccountsPage, DocumentsPage, VouchersPage } from "./workspace-records";
 import { NextWorkspaceStep, WorkspaceGuide } from "./workspace-onboarding";
+import { MonthlyControlPage } from "./workspace-monthly";
 import { ClosingPage, CompaniesPage } from "./workspace-operations";
 import { Field, Input, Modal, Select } from "./workspace-ui";
 import { TourEntry, WorkspaceTour } from "./workspace-tour";
 
 const primaryNav = [
   { id: "inicio", icon: House }, { id: "empresas", icon: Building2 }, { id: "cierre", icon: ClipboardCheck },
-  { id: "comprobantes", icon: ReceiptText }, { id: "documentacion", icon: FileText }, { id: "calendario", icon: CalendarDays },
+  { id: "control", icon: ClipboardCheck }, { id: "comprobantes", icon: ReceiptText }, { id: "documentacion", icon: FileText }, { id: "calendario", icon: CalendarDays },
 ] as const;
 
 const secondaryNav = [
@@ -179,6 +180,7 @@ export function Workspace({ initial, section, mode, email, month, today, company
       case "inicio": return company ? <CompanyDashboard /> : <StudyDashboard />;
       case "empresas": return <CompaniesPage key={purpose ?? "empresas"} openNew={purpose === "nueva"} />;
       case "cierre": return <ClosingPage key={period?.id ?? `${company?.id}-${month}`} guide={sampleSelected && tourStep === 2} closeGuide={tourStep === 2 ? closeGuideExample : undefined} />;
+      case "control": return <MonthlyControlPage key={`${company?.id}-${month}`} />;
       case "comprobantes": return <VouchersPage key={period?.id ?? `${company?.id}-${month}`} guide={sampleSelected && tourStep === 3} closeGuide={tourStep === 3 ? closeGuideExample : undefined} />;
       case "cuentas": return <AccountsPage key={company?.id} />;
       case "documentacion": return <DocumentsPage key={`${period?.id ?? company?.id}-${purpose}`} purpose={purpose} />;

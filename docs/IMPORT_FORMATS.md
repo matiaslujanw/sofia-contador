@@ -66,3 +66,7 @@ El tipo de comprobante admite diferencias de mayúsculas y espacios externos. Ot
 | Banco Comafi | Extractos anonimizados en PDF o formato tabular. Incluir casos con movimientos, cuentas sin movimientos, reversos y débitos rechazados. |
 | Xubio, asientos | Plantilla oficial y muestra de importación verificada para implementar el exportador específico. |
 | Balances y libros mayores | Ejemplos del origen y definición de sus claves, importes y controles. |
+
+## Exportaciones de Control mensual
+
+Checklist, detalle y resumen de IVA se descargan como CSV propios de Sofía (UTF-8 con BOM, punto y coma, importes decimales con punto). El detalle identifica comprobantes pendientes y excluidos de los subtotales. No son archivos de importación Xubio: el adaptador sigue pendiente de plantilla y prueba verificadas. Ver [Circuito mensual](MONTHLY_WORKFLOW.md).

@@ -22,3 +22,7 @@ Sofía acompaña el trabajo contable previo a la registración definitiva en Xub
 **Validación y publicación.** Probar sesiones, Storage y aislamiento en Supabase, verificar archivos reales de los tres orígenes, revisar la instalación y uso en un iPad físico e integrar GitHub y Vercel. El adaptador de exportación Xubio depende de la plantilla oficial validada y de una prueba real.
 
 La asistencia por IA queda para una etapa posterior y es opcional. Los cálculos contables siguen siendo determinísticos.
+
+## Circuito mensual ampliado
+
+La sección **Control mensual** organiza los nueve pasos pedidos, propone tareas faltantes sin cambiar el historial y exporta checklist y papel preliminar de IVA con importes exactos. Incluye TEM Tucumán, pendiente de identificar el municipio. El alcance y los módulos restantes se detallan en [Circuito mensual](MONTHLY_WORKFLOW.md).

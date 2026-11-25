@@ -54,3 +54,11 @@ El ingreso conectado acepta nombre de usuario para cuentas con alias interno y c
 - En el rediseño pasaron los builds de Next.js y de la demo portable, 32 pruebas unitarias y 13 recorridos Playwright tanto en Chromium como en WebKit. Se revisaron el inicio y el tutorial en anchos de escritorio, tablet y teléfono.
 
 - La guía autenticada pasó las pruebas de progreso, permisos y secciones. Se verificó en navegador con una cuenta conectada, teclado y pantalla móvil.
+
+## Circuito mensual ampliado · noviembre 2026
+
+- Implementada la sección Control mensual con nueve etapas, indicadores de revisión y agregado individual de controles faltantes al checklist existente. Incluye TEM Tucumán con municipio pendiente, sueldos, devengamientos, amortización y verificación Xubio.
+- Implementado papel preliminar de IVA ARS y exportación CSV de detalle, resumen y checklist. No constituye liquidación definitiva ni exportador Xubio.
+- Requisitos y dependencias de los nueve puntos: [Circuito mensual](docs/MONTHLY_WORKFLOW.md). Los módulos contables del roadmap siguen pendientes; esta entrega organiza y controla el trabajo disponible.
+- Validación de esta entrega: ESLint, TypeScript, 42 pruebas unitarias, build de producción y build de demo portable aprobados. Pasaron seis recorridos Playwright en Chromium (dos nuevos y cuatro de regresión). Revisión visual de la demo en escritorio y móvil de 390 px sin desbordamiento horizontal. No se modificó SQL ni se ejecutaron pruebas de integración contra servicios reales.
+- Publicación bloqueada: push HTTPS y creación de árbol mediante la conexión GitHub rechazados con 403; la API informa «Resource not accessible by integration». Cambios conservados en la rama local `codex/control-mensual-iva-tem`. No se creó PR ni se modificó la aplicación publicada.

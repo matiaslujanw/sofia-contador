@@ -52,3 +52,7 @@ El tablero general cuenta las empresas activas y sus cierres para el mes elegido
 | Papeles de trabajo y parámetros fiscales vigentes | Liquidaciones preliminares de IVA e Ingresos Brutos, saldos previos, retenciones, percepciones, exportación y revisión técnica. |
 
 El calendario vigente se carga manualmente. La persona responsable define la obligación, la fecha, el importe y las etapas de presentación y pago. Jurisdicciones, vigencias y reglas fiscales se incorporarán con fuentes verificadas y revisión profesional.
+
+## Papel preliminar de IVA
+
+Control mensual muestra IVA informado en ARS y subtotales revisados. Suma débito de ventas aprobadas y crédito computable definido de compras aprobadas; no presume deducibilidad cuando el valor es nulo. Conserva notas de crédito negativas y cero explícito. Las otras monedas se conservan en el detalle pero se excluyen del cálculo. La diferencia parcial no incluye saldos anteriores, percepciones, retenciones, ajustes ni IVA bancario sin documentar y no determina una DDJJ o deuda a pagar. Ver [Circuito mensual](MONTHLY_WORKFLOW.md).

@@ -371,3 +371,14 @@ td.cell-nowrap, .cell-numeric { white-space: nowrap; }
 @media (max-width: 495px) {
   .onboarding-sections dl { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Monthly review shares the existing company/period scope and task controls. */
+.monthly-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.monthly-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.monthly-metrics > div { display: grid; gap: 6px; }
+.monthly-metrics strong { font-size: 1.8rem; }
+.monthly-metrics span { color: var(--muted); font-size: .85rem; }
+.monthly-tasks { list-style: none; padding: 0; margin: 16px 0 0; }
+.monthly-tasks li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); font-size: .85rem; }
+.monthly-tasks li > span:first-child { flex: 1 1 150px; overflow-wrap: anywhere; }
+@media (max-width: 1000px) { .monthly-grid { grid-template-columns: 1fr; } .monthly-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

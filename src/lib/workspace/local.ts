@@ -1,3 +1,4 @@
+import { validateBook } from "@/lib/accounting/engine";
 import { previewImport, readSource, type ColumnMapping, type ImportKind } from "@/lib/imports";
 import { readDemoStorage, writeDemoStorage } from "./demo-storage";
 import { verifyDocument } from "./documents";
@@ -21,7 +22,7 @@ export const localSnapshot = () => readDemoStorage(key);
 export const emptyLocalSnapshot = () => null;
 
 export function decodeLocal(snapshot: string | null, initial: WorkspaceState): WorkspaceState {
-  try { return snapshot ? JSON.parse(snapshot) as WorkspaceState : initial; }
+  try { return snapshot ? { ...initial, ...JSON.parse(snapshot), bookRecords: JSON.parse(snapshot).bookRecords ?? [] } as WorkspaceState : initial; }
   catch { return initial; }
 }
 
@@ -64,7 +65,35 @@ export function mutateLocal(initial: WorkspaceState, input: Command) {
   changeLocal(initial, (state) => {
     const org = requireEntry(state.organization);
     const action = "id" in command && command.id ? "UPDATE" : "INSERT";
+    if (org.role === "viewer") throw new Error("No tenés permiso para modificar registros.");
     switch (command.type) {
+      case "book.import": {
+        const period=openPeriod(state,command.periodId),company=requireEntry(state.companies.find(c=>c.id===period.company_id));
+        const next={...state,bookRecords:[...(state.bookRecords??[])]};
+        for(const input of command.values) {
+          if(!input.document_id || !["opening","statement"].includes(input.kind))throw new Error("El lote requiere respaldo y un tipo admitido.");
+          const payload=validateBook(next,company,period.id,input);
+          next.bookRecords.push({id:crypto.randomUUID(),organization_id:org.id,company_id:company.id,period_id:period.id,payload});
+        }
+        return withEvent(next,"book_records",id,company.id,period.id,"IMPORT");
+      }
+      case "book.save": {
+        const period = openPeriod(state, command.periodId);
+        const company = requireEntry(state.companies.find(c=>c.id===period.company_id));
+        if(command.id) {
+          const previous = requireEntry(state.bookRecords.find(r=>r.id===command.id && r.period_id===period.id));
+          if(previous.payload.kind!=="statement" || command.values.kind!=="statement" || JSON.stringify({...previous.payload,match_id:null})!==JSON.stringify({...command.values,match_id:null})) throw new Error("Los registros son inmutables. Anulá y volvé a cargar.");
+        }
+        const payload = validateBook(state, company, period.id, command.values, command.id);
+        const record = { id, organization_id: org.id, company_id: company.id, period_id: period.id, payload };
+        return withEvent({...state,bookRecords:reorder(state.bookRecords??[],record)},"book_records",id,company.id,period.id,action);
+      }
+      case "book.void": {
+        const previous=requireEntry(state.bookRecords.find(r=>r.id===command.id));
+        openPeriod(state,previous.period_id);
+        if(state.bookRecords.some(r=>(r.payload.kind==="cash"&&r.payload.settles_id===command.id)||(r.payload.kind==="statement"&&r.payload.match_id===command.id)||(r.payload.kind==="journal"&&r.payload.source_key.startsWith(`asset:${command.id}:`)))) throw new Error("El registro tiene movimientos vinculados. Desvinculalos o anulalos primero.");
+        return withEvent({...state,bookRecords:state.bookRecords.filter(r=>r.id!==command.id)},"book_records",command.id,previous.company_id,previous.period_id,"VOID");
+      }
       case "company.save": {
         const previous = command.id ? requireEntry(state.companies.find((company) => company.id === command.id)) : undefined;
         if (state.companies.some((company) => company.id !== id && company.cuit === command.values.cuit)) throw new Error("Ya existe una empresa con ese CUIT.");

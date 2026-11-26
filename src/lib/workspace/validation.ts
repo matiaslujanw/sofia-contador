@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { bookSchema } from "@/lib/accounting/model";
 import { accountKinds, documentCategories, paymentStatuses, reviewStatuses, taskStatuses, xubioStatuses } from "./model";
 
 const uuid = z.uuid();
@@ -50,6 +51,9 @@ export const documentContextSchema = z.object({
 });
 
 export const commandSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("book.import"), periodId: uuid, values: z.array(bookSchema).min(1).max(500) }),
+  z.object({ type: z.literal("book.save"), periodId: uuid, id: uuid.optional(), values: bookSchema }),
+  z.object({ type: z.literal("book.void"), id: uuid }),
   z.object({ type: z.literal("company.save"), organizationId: uuid, id: uuid.optional(), values: companySchema }),
   z.object({ type: z.literal("company.status"), id: uuid, status: z.enum(["active", "archived"]) }),
   z.object({ type: z.literal("period.ensure"), companyId: uuid, month: monthSchema }),

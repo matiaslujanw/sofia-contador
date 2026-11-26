@@ -70,3 +70,19 @@ El tipo de comprobante admite diferencias de mayúsculas y espacios externos. Ot
 ## Exportaciones de Control mensual
 
 Checklist, detalle y resumen de IVA se descargan como CSV propios de Sofía (UTF-8 con BOM, punto y coma, importes decimales con punto). El detalle identifica comprobantes pendientes y excluidos de los subtotales. No son archivos de importación Xubio: el adaptador sigue pendiente de plantilla y prueba verificadas. Ver [Circuito mensual](MONTHLY_WORKFLOW.md).
+
+## Libro operativo: aperturas y extractos
+
+En **Contabilidad operativa** se importan saldos de apertura o movimientos de extracto desde CSV/XLS/XLSX con asignación de columnas y vista previa. Un lote admite hasta 500 filas, se valida íntegramente y se confirma en una sola transacción. Una referencia repetida impide duplicar el movimiento. Primero se conserva el original en Documentación; el lote exige elegir ese respaldo. La persona responsable verifica que el archivo analizado corresponda al original seleccionado.
+
+Aperturas: `date`, `reference`, `description`, `role` (`cliente`/`proveedor`), `cuit`, `name`, `amount` con signo, `control_account_code`, `offset_account_code`. Solo una apertura por tipo y CUIT en cada empresa; usar el saldo anterior al inicio del historial importado, no volver a cargar el cierre de cada mes.
+
+Extractos: `date`, `reference`, `description`, `amount` (+ crédito, − débito), `cash_account_code`. Fechas ISO o DD/MM/AAAA. Seleccionar el separador decimal de texto; los números de Excel usan su valor almacenado. Los códigos se vinculan a cuentas activas de la empresa. Las notas de archivo y correspondencias de Xubio se revisan en la vista previa; no se afirma compatibilidad universal con sus exportaciones.
+
+## Asientos XLS para Xubio
+
+El exportador usa el [instructivo oficial argentino](https://ayuda.xubio.com/es-ar/como-importo-asientos-contables-manuales/) y su [modelo descargable](https://ayuda.xubio.com/es-ar/filedownload/3043/), consultados el 26/11/2026. El modelo publicado es un libro XLSX; el instructivo exige el archivo de salida **XLS (Excel 97-2003)**, por lo que Sofía escribe BIFF8.
+
+Las columnas exactas del modelo son `FECHA`, `CONCEPTO`, `CIRCUITOCONTABLE`, `CUENTA`, `DEBE`, `HABER`, `ORGANIZACION`, `CENTRODECOSTO`, `DESCRIPCION`. Cada asiento tiene una fila cabecera con fecha numérica de Excel y formato DD/MM/AAAA, concepto y circuito; luego sus líneas por **nombre exacto** de cuenta. Los importes se escriben como texto decimal para conservar centavos, conforme a la recomendación del instructivo. Las contrapartes comerciales se informan cuando están identificadas; los nombres deben existir en Xubio. No se exporta un centro de costo que no haya sido definido.
+
+Se bloquean otras monedas porque el modelo verificado no contiene columnas de moneda/cotización. El CSV alternativo conserva códigos y valores exactos para revisión. La descarga no equivale a una importación aceptada y no marca registros como enviados. Se requiere confirmar cuentas/organizaciones/circuito y ausencia de registración previa, probar primero en una empresa de Xubio y comparar saldos. La aceptación real en Xubio continúa pendiente.

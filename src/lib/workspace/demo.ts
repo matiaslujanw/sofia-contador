@@ -49,10 +49,11 @@ export function createDemoWorkspace(month: string): WorkspaceState {
     { id: id(702), company_id: companies[2].id, period_id: periods[4].id, title: "IVA mensual", due_on: `${shiftMonth(month, 1)}-22`, status: "pending", amount: null, notes: "Fecha ficticia para la demostración.", filed_on: null, paid_on: null, document_id: null },
   ];
   return {
-    ...emptyWorkspace, organizations: [organization], organization, companies, periods, tasks, vouchers, obligations,
+    ...emptyWorkspace, bookRecords: [], organizations: [organization], organization, companies, periods, tasks, vouchers, obligations,
     accounts: [
       { id: id(300), code: "1.3.01", name: "Equipamiento operativo", kind: "asset", category: "Bienes de uso" },
       { id: id(301), code: "5.1.02", name: "Servicios contratados", kind: "expense", category: "Servicios" },
+      { id: id(303), code: "1.1.01", name: "Banco de prueba", kind: "asset", category: "Bancos" },
       { id: id(302), code: "2.1.01", name: "Proveedores", kind: "liability", category: "Deudas comerciales" },
     ].map((account) => ({ ...account, organization_id: organization.id, company_id: companies[0].id, parent_code: null, status: "active" } as WorkspaceState["accounts"][number])),
     activity: [

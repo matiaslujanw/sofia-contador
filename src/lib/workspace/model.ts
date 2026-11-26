@@ -1,3 +1,5 @@
+import type { BookRecord } from "@/lib/accounting/model";
+
 export const taskStatuses = {
   pending: "Pendiente",
   in_progress: "En proceso",
@@ -94,11 +96,12 @@ export type WorkspaceState = {
   organizations: Organization[]; members: Member[]; organization: Organization | null; companies: Company[]; periods: Period[];
   tasks: Task[]; documents: Document[]; accounts: Account[]; vouchers: Voucher[]; rules: ClassificationRule[];
   imports: ImportRecord[]; activity: AuditEvent[]; obligations: Obligation[];
+  bookRecords: BookRecord[]; accountingReady: boolean;
 };
 
 export const emptyWorkspace: WorkspaceState = {
   organizations: [], members: [], organization: null, companies: [], periods: [], tasks: [], documents: [],
-  accounts: [], vouchers: [], rules: [], imports: [], activity: [], obligations: [],
+  accounts: [], vouchers: [], rules: [], imports: [], activity: [], obligations: [], bookRecords: [], accountingReady: true,
 };
 
 export const defaultClassification: VoucherClassification = {

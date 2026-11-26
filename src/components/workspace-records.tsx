@@ -7,6 +7,7 @@ import { demoTourVoucherId } from "@/lib/workspace/demo";
 import { documentExtensions } from "@/lib/workspace/documents";
 import { companyName, cuitLabel, dayLabel, fileSize, money, monthLabel } from "@/lib/workspace/format";
 import { accountKinds, documentCategories, paymentStatuses, reviewStatuses, xubioStatuses, type Account, type AccountValues, type Voucher, type VoucherClassification } from "@/lib/workspace/model";
+import { ManualVoucher } from "./manual-voucher";
 import { ImportPanel } from "./import-panel";
 import { useWorkspace } from "./workspace-context";
 import { CompanyRequired, PeriodRequired } from "./workspace-operations";
@@ -82,6 +83,7 @@ function VoucherForm({ voucher, editable, close }: { voucher: Voucher; editable:
 
 export function VouchersPage({ guide = false, closeGuide }: { guide?: boolean; closeGuide?: () => void }) {
   const { company, period, state, month, locale, href, canEdit } = useWorkspace();
+  const [manual,setManual]=useState(false);
   const [direction, setDirection] = useState<Voucher["direction"]>("purchase");
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("");
@@ -94,7 +96,7 @@ export function VouchersPage({ guide = false, closeGuide }: { guide?: boolean; c
     .sort((a, b) => b.date.localeCompare(a.date) || b.receipt_number - a.receipt_number);
   return <>
     <Heading title="Compras y ventas" description={company ? `${companyName(company)} · ${monthLabel(month, locale)}` : "Consultá y clasificá los comprobantes del período."}
-      actions={editable && <Link className="button button-primary" href={href("documentacion", {}, { tipo: direction === "purchase" ? "compras" : "ventas" })}><FileUp size={17} /> Importar</Link>} />
+      actions={editable && <><button className="button button-primary" type="button" onClick={()=>setManual(true)}>Nuevo comprobante</button><Link className="button button-secondary" href={href("documentacion", {}, { tipo: direction === "purchase" ? "compras" : "ventas" })}><FileUp size={17} /> Importar</Link></>} />
     {!company ? <CompanyRequired /> : !period ? <PeriodRequired /> : <section className="panel">
       <div className="segments" aria-label="Dirección del comprobante">
         <button type="button" className="segment" aria-pressed={direction === "purchase"} onClick={() => setDirection("purchase")}>Compras <span>{all.filter((entry) => entry.direction === "purchase").length}</span></button>
@@ -116,6 +118,7 @@ export function VouchersPage({ guide = false, closeGuide }: { guide?: boolean; c
       </table></div> : <Empty icon={ReceiptText} title={query || status ? "Sin comprobantes para estos filtros" : `Sin comprobantes de ${direction === "purchase" ? "compras" : "ventas"}`}
         text={editable && !query && !status ? "Podés importar una planilla y revisar sus columnas antes de guardar." : undefined} />}
     </section>}
+    {manual && <ManualVoucher direction={direction} close={()=>setManual(false)}/>}
     {selected && <VoucherForm voucher={selected} editable={editable} close={() => { setSelected(null); closeGuide?.(); }} />}
   </>;
 }

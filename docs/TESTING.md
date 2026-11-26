@@ -18,3 +18,9 @@ Para admitir archivos de ARCA, Comafi y Xubio, repetí con muestras no sensibles
 ## Control mensual e IVA preliminar
 
 Se agregaron cuatro pruebas unitarias de aislamiento por estudio/empresa/período, crédito indefinido frente a cero, notas de crédito, exclusión de otras monedas, centavos grandes y CSV con fórmulas neutralizadas. La suite completa pasa 42 pruebas. Dos recorridos nuevos en Chromium verifican agregado/persistencia de TEM, descarga IVA, consulta móvil, período cerrado y período sin iniciar; pasan junto con cuatro recorridos existentes del workspace. Builds Next.js y portable aprobados; revisión visual del portable en escritorio y 390 px. Integraciones ARCA/Xubio y entorno Supabase real quedan fuera de esta validación.
+
+## Libro operativo (26/11/2026)
+
+54 pruebas unitarias aprobadas, incluyendo saldos con notas de crédito y pagos parciales, sobrepagos, alcance, signos conciliatorios, transferencias entre dos cuentas, amortización y residual, flujo frente a devengado, IVA no computable, modelo Xubio BIFF8, aperturas importadas y saldos por cuenta bancaria. Se ejecutaron las migraciones y las pruebas anteriores de RLS más `operating-book.sql` en un PostgreSQL local embebido con Auth/Storage simulados. Se verificaron rechazo de cuentas cruzadas, duplicados, fechas fuera del mes, sobrepagos, escritura viewer, lectura de terceros, asientos desbalanceados, cuotas repetidas y cambios en meses cerrados.
+
+Pasaron 10 recorridos únicos en Chromium: cuatro del libro (alta manual, TEM/pago parcial/conciliación/exportación, amortización en iPad e importación de apertura con original) más seis de regresión del workspace y calendario. Revisión visual de demo a 820 px. ESLint, TypeScript, Next.js y demo portable se verifican antes de publicar. Supabase real y aceptación del XLS dentro de Xubio requieren comprobación posterior.

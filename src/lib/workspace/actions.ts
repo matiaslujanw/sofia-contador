@@ -6,6 +6,8 @@ import { z } from "zod";
 import { previewImport, readSource } from "@/lib/imports";
 import { getWorkspaceAccess } from "@/lib/supabase/access";
 import { verifyDocument } from "./documents";
+import { validateBook } from "@/lib/accounting/engine";
+import { loadWorkspace } from "./queries";
 import { commandSchema, documentContextSchema, importOptionsSchema } from "./validation";
 
 type Result<T> = { ok: true; data: T } | { ok: false; message: string };
@@ -64,9 +66,39 @@ async function saveRecord(client: SupabaseClient, table: string, id: string | un
 
 export async function mutateWorkspace(input: unknown): Promise<Result<{ id?: string }>> {
   try {
-    const { supabase } = await liveAccess();
+    const { supabase, userId } = await liveAccess();
     const command = commandSchema.parse(input);
     switch (command.type) {
+      case "book.import": {
+        const period=await periodScope(supabase,command.periodId);
+        const state=await loadWorkspace(supabase,userId,period.organization_id);
+        const company=state.companies.find(c=>c.id===period.company_id);
+        if(!company || !state.accountingReady) throw new WorkspaceError("Primero activá el libro operativo en Supabase.");
+        try {
+          for(const input of command.values) {
+            if(!input.document_id || !["opening","statement"].includes(input.kind)) throw new Error("El lote requiere respaldo y un tipo de importación admitido.");
+            const payload=validateBook(state,company,period.id,input);
+            state.bookRecords.push({id:randomUUID(),organization_id:period.organization_id,company_id:company.id,period_id:period.id,payload});
+          }
+        }catch(e){throw new WorkspaceError(e instanceof Error?e.message:"Lote inválido.");}
+        checked(await supabase.rpc("save_book_batch",{target_period:period.id,record_payloads:command.values}));
+        return {ok:true,data:{}};
+      }
+      case "book.save": {
+        const period = await periodScope(supabase, command.periodId);
+        const state = await loadWorkspace(supabase,userId,period.organization_id);
+        const company = state.companies.find(c=>c.id===period.company_id);
+        if(!company || !state.accountingReady) throw new WorkspaceError("Primero activá la migración del libro operativo en Supabase.");
+        let payload;
+        try { payload=validateBook(state,company,period.id,command.values,command.id); }
+        catch(e){ throw new WorkspaceError(e instanceof Error ? e.message : "Revisá el registro."); }
+        const id = checked(await supabase.rpc("save_book_record", { target_period: period.id, target_id: command.id ?? null, record_payload: payload }));
+        return {ok:true,data:{id}};
+      }
+      case "book.void": {
+        checked(await supabase.rpc("void_book_record",{target_id:command.id}));
+        return {ok:true,data:{id:command.id}};
+      }
       case "company.save": {
         const values = { ...command.values, fiscal_year_end: command.values.fiscal_year_end || null };
         const row = await saveRecord(supabase, "companies", command.id,

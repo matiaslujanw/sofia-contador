@@ -24,6 +24,7 @@ export const sectionGuide = {
   inicio: "Mirá el avance de los cierres, lo que requiere atención y los próximos vencimientos cargados.",
   empresas: "Creá y actualizá la ficha de cada cliente. Podés archivar empresas y conservar su historial.",
   cierre: "Abrí un mes para una empresa y actualizá las tareas del checklist a medida que trabajás.",
+  contabilidad: "Registrá aperturas, cobros, pagos, obligaciones, extractos, activos y asientos. Consultá saldos y resultados por mes.",
   control: "Revisá los nueve pasos del circuito mensual, agregá controles al checklist y exportá el papel preliminar de IVA.",
   comprobantes: "Buscá las compras y ventas importadas, revisá sus importes y asignales una cuenta contable.",
   documentacion: "Subí respaldos o importá planillas. Revisá las columnas y la vista previa antes de confirmar.",

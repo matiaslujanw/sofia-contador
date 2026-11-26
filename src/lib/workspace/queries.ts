@@ -1,4 +1,5 @@
 import "server-only";
+import type { BookRecord } from "@/lib/accounting/model";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   emptyWorkspace, type Account, type AuditEvent, type ClassificationRule, type Company,
@@ -48,10 +49,22 @@ export async function loadWorkspace(client: SupabaseClient, userId: string, orgI
       ? client.from("organization_members").select("organization_id,user_id,role").eq("organization_id", id)
       : Promise.resolve({ data: [], error: null }),
   ]);
+  const bookRecords: BookRecord[] = [];
+  let accountingReady = true;
+  // An unapplied migration must not break the existing workspace.
+  for (let offset = 0; ; offset += pageSize) {
+    const result = await client.from("book_records").select("id,organization_id,company_id,period_id,payload").eq("organization_id", id).eq("voided", false).order("id").range(offset, offset + pageSize - 1);
+    if (result.error) {
+      if (["42P01", "PGRST205"].includes(result.error.code)) { accountingReady = false; break; }
+      throw new Error("No se pudo consultar el libro operativo.");
+    }
+    bookRecords.push(...result.data as unknown as BookRecord[]);
+    if (result.data.length < pageSize) break;
+  }
   if (activity.error || members.error) throw new Error("No se pudo consultar la actividad o membresía.");
   return {
     organizations, organization, companies: companies.map(normalizeCompany).sort((a, b) => a.legal_name.localeCompare(b.legal_name)),
-    periods, tasks, documents, accounts, vouchers, rules, imports,
+    periods, tasks, documents, accounts, vouchers, rules, imports, bookRecords, accountingReady,
     activity: activity.data as AuditEvent[], members: members.data as Member[], obligations,
   };
 }

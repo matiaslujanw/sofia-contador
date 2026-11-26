@@ -1,5 +1,6 @@
 "use client";
 
+import { bookObligations } from "@/lib/accounting/engine";
 import {
   Activity, Building2, CalendarClock, CalendarDays, ChartNoAxesCombined, Check, ChevronDown, ChevronRight,
   ClipboardCheck, Clock3, FileUp, Files, ListChecks, Plus, ReceiptText, ShieldAlert, Wallet, type LucideIcon,
@@ -30,7 +31,7 @@ export function StudyDashboard() {
   const companyIds = new Set(rows.map((row) => row.company.id));
   const periodIds = new Set(rows.flatMap((row) => row.period ? [row.period.id] : []));
   const alerts = scopeAlerts(state, month).filter((alert) => companyIds.has(alert.companyId));
-  const due = state.obligations.filter((entry) => periodIds.has(entry.period_id) && entry.due_on >= today && ["pending", "filed"].includes(entry.status))
+  const due = [...state.obligations,...bookObligations(state)].filter((entry) => periodIds.has(entry.period_id) && entry.due_on >= today && ["pending", "filed"].includes(entry.status))
     .sort((a, b) => a.due_on.localeCompare(b.due_on));
   const activity = state.activity.filter((event) => event.period_id ? periodIds.has(event.period_id) : (!event.company_id || companyIds.has(event.company_id)) && event.created_at.slice(0, 7) === month)
     .sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 4);

@@ -1,5 +1,6 @@
 "use client";
 
+import { bookObligations } from "@/lib/accounting/engine";
 import { Activity, CalendarClock, ClipboardList, Plus, Settings, ShieldAlert, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -137,7 +138,7 @@ export function CalendarPage() {
   const scope = new Set(monthlyPeriods.map((record) => record.id));
   const companies = new Map(state.companies.map((record) => [record.id, record]));
   const periodStatus = new Map(monthlyPeriods.map((record) => [record.id, record.status]));
-  const baseRows = state.obligations.filter((obligation) => scope.has(obligation.period_id));
+  const baseRows = [...state.obligations,...bookObligations(state)].filter((obligation) => scope.has(obligation.period_id));
   const needle = query.trim().toLocaleLowerCase(locale);
   const filtered = baseRows.filter((obligation) => {
     const entry = companies.get(obligation.company_id);
@@ -149,6 +150,7 @@ export function CalendarPage() {
   const createButton = <button id="crear-organizacion" type="button" className="button button-primary" onClick={() => setDialog("new")}><Plus size={17} aria-hidden="true" /> Nuevo vencimiento</button>;
 
   return <>
+    <div className="notice">{company ? `CUIT ${company.cuit} · terminación ${company.cuit.slice(-1)}. ` : "Elegí una empresa para verificar la terminación de CUIT. "}<a className="text-button" href="https://www.arca.gob.ar/vencimientos/" target="_blank" rel="noreferrer">Consultar agenda oficial ARCA</a> · Verificá impuesto, régimen, mes y prórrogas antes de guardar la fecha. IIBB y TEM requieren la fuente provincial o municipal.</div>
     <Heading title="Calendario fiscal" description={`${monthLabel(month, locale)} · ${company ? companyName(company) : "Vista del estudio"}`} actions={canCreate ? createButton : undefined} />
     <section className="panel">
       <SectionHeading title="Obligaciones del período" icon={CalendarClock} subtitle="Vencimientos cargados por el estudio." />
@@ -164,7 +166,7 @@ export function CalendarPage() {
         <thead><tr><th scope="col">Obligación</th><th scope="col">Vencimiento</th><th scope="col" className="cell-numeric">Importe</th><th scope="col">Estado</th><th scope="col"><span className="sr-only">Acciones</span></th></tr></thead>
         <tbody>{filtered.map((record) => {
           const entry = companies.get(record.company_id);
-          const editable = canEdit && entry?.status === "active" && periodStatus.get(record.period_id) === "open";
+          const editable = canEdit && !record.id.startsWith("book:") && entry?.status === "active" && periodStatus.get(record.period_id) === "open";
           const overdue = record.due_on < today && (record.status === "pending" || record.status === "filed");
           return <tr key={record.id}>
             <td className="cell-main"><strong>{record.title}</strong>{entry && <small>{companyName(entry)}</small>}</td>
@@ -191,7 +193,7 @@ function ObligationModal({ record, close }: { record?: Obligation; close: () => 
   const period = record ? state.periods.find((entry) => entry.id === record.period_id) : monthPeriods.find((entry) => entry.company_id === companyId);
   const documents = state.documents.filter((entry) => entry.period_id === period?.id);
   const selectedDocument = documents.find((entry) => entry.id === record?.document_id);
-  const editable = canEdit && selected?.status === "active" && (!record || period?.status === "open");
+  const editable = canEdit && !record?.id.startsWith("book:") && selected?.status === "active" && (!record || period?.status === "open");
 
   return <Modal title={record ? editable ? "Editar vencimiento" : record.title : "Nuevo vencimiento"}
     description={`${monthLabel(month, locale)}${selected ? ` · ${companyName(selected)}` : ""}`} close={close}>

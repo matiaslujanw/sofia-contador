@@ -85,10 +85,11 @@ export function MonthlyControlPage() {
         </div>
       </section>
       <section className="panel">
-        <SectionHeading title="Integraciones y próximos módulos" icon={ClipboardCheck} />
+        <Link className="button button-primary mb-3" href={href("contabilidad")}>Abrir contabilidad operativa</Link>
+        <SectionHeading title="Integraciones y alcance" icon={ClipboardCheck} />
         <p className="muted">ARCA: la importación actual usa archivos y asignación de columnas. Los vencimientos se cargan manualmente. TEM Tucumán: falta definir el municipio y sus reglas vigentes.</p>
-        <p className="muted mt-3">Xubio: estos CSV son papeles de trabajo de Sofía. La importación directa de asientos y cuentas corrientes necesita una plantilla y una prueba verificadas. Conservamos el código del plan de cuentas importado.</p>
-        <p className="muted mt-3">Pendientes de implementación: saldos de cuentas corrientes, cobros y pagos con importes, conciliación, asientos, devengamientos, amortizaciones e informes completos de caja y rentabilidad. Los estados del checklist documentan tu revisión.</p>
+        <p className="muted mt-3">Xubio: el detalle de IVA usa CSV de trabajo. Desde Contabilidad operativa podés exportar asientos XLS según el modelo oficial; verificá nombres, circuito y una importación de prueba.</p>
+        <p className="muted mt-3">Contabilidad operativa reúne aperturas y saldos de cuentas corrientes, cobros y pagos parciales, devengamientos, vinculación de extractos, amortización lineal y asientos. Los informes usan solo registros contabilizados. La conciliación agrupada, conversiones de moneda y liquidaciones fiscales completas requieren una ampliación.</p>
       </section>
     </>}
   </>;

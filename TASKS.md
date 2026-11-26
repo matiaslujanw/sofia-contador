@@ -68,3 +68,11 @@ El ingreso conectado acepta nombre de usuario para cuentas con alias interno y c
 - Reemplazados los acentos morados por rosa pastel `#F5B8D0`: navegación, acciones, inicio, guías, formularios de acceso, gráficos e íconos SVG/PNG (incluido el acceso de iPad).
 - Se conserva la estructura oscura y la distinción de estados verde, ámbar y rojo.
 - Verificado con ESLint, TypeScript, 42 pruebas unitarias, build Next.js y demo portable. Revisión visual en escritorio y anchos de 820/390 px sin desbordamientos; contraste de texto principal en acciones y selección superior a 9:1. Publicación remota pendiente de resolver el permiso de escritura documentado.
+
+## Libro operativo · 26/11/2026
+
+- Implementado en código: módulo Contabilidad con aperturas únicas y saldos acumulados de clientes/proveedores, cobros y pagos parciales, anticipos y otros movimientos clasificados, devengamientos IVA/IIBB/TEM/sueldos/cargas con obligaciones derivadas en calendario, conciliación individual y control de saldos bancarios, activos y amortización lineal, asientos de comprobantes y manuales, informes de resultado/flujo con gráficos y tabla exacta.
+- Implementados comprobantes manuales, importación de aperturas y extractos con mapeo y respaldo, controles de duplicados, anulación auditada y exportación XLS según modelo oficial de Xubio. Falta prueba real de aceptación en Xubio.
+- Migración preparada `20261126000100_operating_book.sql`: RPC con bloqueo por empresa, alcance, balance y saldo, RLS y auditoría. Aplicación en Supabase de producción pendiente de acceso; el módulo detecta esa situación sin interrumpir funcionalidades previas.
+- Verificación: 54 pruebas unitarias, pruebas SQL de migraciones/RLS/libro y 10 recorridos únicos Playwright en Chromium aprobados. Conexión real ARCA, DDJJ completas, conciliación agrupada y conversiones de moneda siguen pendientes. Ver [circuito](docs/MONTHLY_WORKFLOW.md), [formatos](docs/IMPORT_FORMATS.md) y [pruebas](docs/TESTING.md).
+- Los cambios de control mensual y rosa pastel previos ya fueron subidos a main y desplegados en Vercel. El bloqueo de GitHub informado en entradas históricas quedó resuelto al autorizar la integración.

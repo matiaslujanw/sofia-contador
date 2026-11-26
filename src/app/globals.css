@@ -382,3 +382,11 @@ td.cell-nowrap, .cell-numeric { white-space: nowrap; }
 .monthly-tasks li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); font-size: .85rem; }
 .monthly-tasks li > span:first-child { flex: 1 1 150px; overflow-wrap: anywhere; }
 @media (max-width: 1000px) { .monthly-grid { grid-template-columns: 1fr; } .monthly-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+@media (min-width: 661px) and (max-width: 940px) {
+  .topbar { flex-wrap: wrap; }
+  .top-controls { width: 100%; order: 2; margin-left: 0; }
+  .top-controls > label { flex: 1; }
+  .top-controls .control { max-width: 100%; }
+  .topbar > .tour-entry { margin-left: auto; }
+}

@@ -53,3 +53,9 @@ El roadmap contempla proveedores y clientes como entidades independientes, cuent
 ## Verificación local
 
 Con `initdb`, `pg_ctl` y `psql` de PostgreSQL 17 disponibles en `PATH`, ejecutá `bash supabase/tests/run-postgres.sh` desde la raíz. El script prepara una instancia temporal, instala esquemas mínimos compatibles con Auth y Storage, aplica las migraciones y corre los casos de políticas y flujos. La prueba de integración con el proyecto Supabase verifica por separado PostgREST, Auth y Storage.
+
+## Activación del libro operativo (20261126000100)
+
+La migración `20261126000100_operating_book.sql` crea `book_records`, políticas de lectura, validaciones de escritura por RPC, índices de referencia/origen/apertura/coincidencia, bitácora y bloqueo de cambios de naturaleza contable con historia cerrada. `save_book_record` inserta un registro o cambia únicamente la coincidencia de un extracto. `save_book_batch` importa hasta 500 aperturas o movimientos de extracto en una transacción, exigiendo respaldo del período. `void_book_record` anula sin borrar historia y rechaza dependencias activas.
+
+Aplicá esta migración en el mismo proyecto Supabase usado por Vercel. No se cambian las tablas contables previas. Después verificá desde dos usuarios con roles diferentes: alta, consulta, pago parcial, rechazo de sobrepago, conciliación, cierre e intento de modificación. Hasta aplicar la migración, Contabilidad operativa muestra su estado de activación y conserva habilitados los módulos previos. Las pruebas locales usan sustitutos de Auth/Storage; la verificación contra Supabase real debe registrarse por separado.

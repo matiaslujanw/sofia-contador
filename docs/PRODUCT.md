@@ -26,3 +26,9 @@ La asistencia por IA queda para una etapa posterior y es opcional. Los cálculos
 ## Circuito mensual ampliado
 
 La sección **Control mensual** organiza los nueve pasos pedidos, propone tareas faltantes sin cambiar el historial y exporta checklist y papel preliminar de IVA con importes exactos. Incluye TEM Tucumán, pendiente de identificar el municipio. El alcance y los módulos restantes se detallan en [Circuito mensual](MONTHLY_WORKFLOW.md).
+
+## Libro operativo disponible en código
+
+La sección **Contabilidad** agrupa cuentas corrientes, caja/bancos, devengamientos y obligaciones, conciliación individual, bienes de uso, asientos y resultados. La carga manual de comprobantes está en Compras y ventas. La agenda ofrece la fuente oficial ARCA y la terminación de CUIT de la empresa, con fechas verificadas manualmente. La integración fiscal automática y las liquidaciones completas siguen pendientes.
+
+Los nuevos registros requieren aplicar la migración del libro operativo en el proyecto Supabase de destino. El exportador XLS se basa en el modelo oficial de Xubio; falta la prueba de aceptación dentro de Xubio. El alcance, controles y límites están descritos en las reglas contables y los formatos.

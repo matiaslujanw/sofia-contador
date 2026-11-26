@@ -65,6 +65,7 @@ export function CompanyHome() {
       <Heading title={companyName(company)} description={`CUIT ${cuitLabel(company.cuit)} · ${monthLabel(month, locale)}`}
         actions={<Link className="button button-secondary" href={href("cierre")}>Abrir cierre</Link>} />
     </section>
+    <section className="panel"><SectionHeading title="Preparar el mes, paso a paso" subtitle="Primero el plan de Xubio; después comprobantes de ARCA, resumen bancario y papel impositivo." action={<Link className="button button-primary" href={href("preparacion")}>Comenzar preparación del mes</Link>} /></section>
     <div className="company-tool-grid" aria-label={`Herramientas de ${companyName(company)}`}>
       {companyTools.map(tool => <Link key={tool.title} className="panel company-tool-card"
         href={href(tool.section, {}, "tab" in tool ? { tipo: tool.tab } : undefined) + ("anchor" in tool ? `#${tool.anchor}` : "")}>

@@ -32,10 +32,11 @@ type ImportPanelProps = {
   month: string;
   disabled?: boolean;
   initialKind?: ImportKind;
+  lockedKind?: boolean;
   onConfirm: (input: ImportRequest) => Promise<Outcome>;
 };
 
-export function ImportPanel({ month, disabled = false, initialKind = "purchases", onConfirm }: ImportPanelProps) {
+export function ImportPanel({ month, disabled = false, initialKind = "purchases", lockedKind = false, onConfirm }: ImportPanelProps) {
   const fileInput = useId();
   const uploadRequest = useRef(0);
   const [kind, setKind] = useState<ImportKind>(initialKind);
@@ -168,7 +169,7 @@ export function ImportPanel({ month, disabled = false, initialKind = "purchases"
       <div className="grid gap-3 md:grid-cols-2">
         <label className="field">
           <span>Tipo de importación</span>
-          <select className="control" value={kind} onChange={changeKind} disabled={disabled || reading || saving}>
+          <select className="control" value={kind} onChange={changeKind} disabled={lockedKind || disabled || reading || saving}>
             {kinds.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
           </select>
         </label>

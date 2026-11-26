@@ -41,3 +41,15 @@ describe("indicadores del espacio de trabajo", () => {
     expect(validCuit("30719990018")).toBe(false);
   });
 });
+
+it("presenta cero explícito en compras sin actividad y revoca ese cero al cargar comprobantes", () => {
+  const state = createDemoWorkspace("2026-11"), company = state.companies[1];
+  const period = state.periods.find(p=>p.company_id===company.id && p.month==="2026-11-01")!;
+  const task = state.tasks.find(t=>t.period_id===period.id && t.title==="Recepción de comprobantes recibidos")!;
+  expect(companyInsights(state,company,"2026-11").purchases).toBeNull();
+  task.status="not_applicable";
+  expect(companyInsights(state,company,"2026-11").purchases).toBe(0n);
+  expect(companyInsights(state,company,"2026-11").vatCreditReported).toBe(0n);
+  state.vouchers.push({...state.vouchers[0],company_id:company.id,period_id:period.id,currency:"USD"});
+  expect(companyInsights(state,company,"2026-11").purchases).toBeNull();
+});

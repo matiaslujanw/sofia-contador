@@ -82,3 +82,10 @@ El ingreso conectado acepta nombre de usuario para cuentas con alias interno y c
 - Inicio simplificado a tarjetas de empresas activas y acción Nueva empresa. Los selectores de mes y los accesos operativos aparecen al entrar en una empresa. La guía inicial automática se conserva dentro del espacio de trabajo; la ayuda sigue disponible desde el encabezado.
 - Nueva portada de empresa con accesos a cada tarea, carga y consulta solicitada. Las pestañas de Contabilidad se conservan en la URL y al cambiar de empresa/mes o recargar. Se adaptó el tutorial a la nueva portada.
 - Verificado: ESLint, TypeScript, 54 pruebas unitarias, build Next.js y demo portable. Se verificaron 21 recorridos únicos de navegador en Chromium; dos esperas de navegación se ajustaron y los nueve recorridos afectados pasaron al repetirlos. Revisadas las portadas en iPad (820 px) y teléfono (390 px), y el mantenimiento de empresa/mes/pestaña al navegar y recargar.
+
+## Preparación del mes · circuito priorizado
+
+- Nuevo recorrido dentro de cada empresa: plan de cuentas → compras → ventas → PDF Comafi → papel impositivo. Incluye importación en contexto con tipo bloqueado, comprobantes manuales, confirmación persistente de «sin compras/ventas» y guardado directo del PDF como extracto.
+- El indicador de compras distingue cero confirmado de documentación pendiente y no presume cero si existen comprobantes de otras monedas.
+- Pendientes que requieren muestras: exportación real del plan Xubio, archivos ARCA y resumen PDF de texto Comafi. Falta desarrollar/validar la extracción bancaria y completar el papel fiscal con saldos previos, retenciones, percepciones y ajustes para determinar pagar/a favor. Se conserva el aviso explícito en el recorrido.
+- Validado con ESLint, TypeScript, build de producción, 55 pruebas unitarias y tres recorridos de navegador de preparación/importación. Se comprobó además la persistencia del PDF respaldatorio al recargar.

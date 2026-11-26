@@ -21,7 +21,8 @@ export type OnboardingStep = {
 };
 
 export const sectionGuide = {
-  inicio: "Mirá el avance de los cierres, lo que requiere atención y los próximos vencimientos cargados.",
+  inicio: "Elegí una empresa y entrá en sus tareas del mes.",
+  preparacion: "Prepará el mes en orden: cuentas, compras, ventas, resumen bancario y papel impositivo.",
   empresas: "Creá y actualizá la ficha de cada cliente. Podés archivar empresas y conservar su historial.",
   cierre: "Abrí un mes para una empresa y actualizá las tareas del checklist a medida que trabajás.",
   contabilidad: "Registrá aperturas, cobros, pagos, obligaciones, extractos, activos y asientos. Consultá saldos y resultados por mes.",

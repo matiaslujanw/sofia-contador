@@ -25,6 +25,7 @@ import { CompanyDashboard, CompanyHome, StudyDashboard } from "./workspace-dashb
 import { AccountsPage, DocumentsPage, VouchersPage } from "./workspace-records";
 import { NextWorkspaceStep, WorkspaceGuide } from "./workspace-onboarding";
 import { BookPage } from "./workspace-book";
+import { PreparationPage } from "./workspace-preparation";
 import { MonthlyControlPage } from "./workspace-monthly";
 import { ClosingPage, CompaniesPage } from "./workspace-operations";
 import { Field, Input, Modal, Select } from "./workspace-ui";
@@ -32,7 +33,7 @@ import { TourEntry, WorkspaceTour } from "./workspace-tour";
 
 const primaryNav = [
   { id: "inicio", icon: House }, { id: "empresas", icon: Building2 }, { id: "cierre", icon: ClipboardCheck },
-  { id: "control", icon: ClipboardCheck }, { id: "contabilidad", icon: LayoutList }, { id: "comprobantes", icon: ReceiptText }, { id: "documentacion", icon: FileText }, { id: "calendario", icon: CalendarDays },
+  { id: "preparacion", icon: LayoutList }, { id: "control", icon: ClipboardCheck }, { id: "contabilidad", icon: LayoutList }, { id: "comprobantes", icon: ReceiptText }, { id: "documentacion", icon: FileText }, { id: "calendario", icon: CalendarDays },
 ] as const;
 
 const secondaryNav = [
@@ -183,8 +184,9 @@ export function Workspace({ initial, section, mode, email, month, today, company
       case "empresas": return <CompaniesPage key={purpose ?? "empresas"} openNew={purpose === "nueva"} />;
       case "cierre": return <ClosingPage key={period?.id ?? `${company?.id}-${month}`} guide={sampleSelected && tourStep === 2} closeGuide={tourStep === 2 ? closeGuideExample : undefined} />;
       case "contabilidad": return <BookPage initialTab={purpose} key={`${company?.id}-${month}-${purpose ?? "current"}`} />;
+      case "preparacion": return <PreparationPage step={purpose} key={`${company?.id}-${month}-${purpose ?? "cuentas"}`} />;
       case "control": return <MonthlyControlPage key={`${company?.id}-${month}`} />;
-      case "comprobantes": return <VouchersPage key={period?.id ?? `${company?.id}-${month}`} guide={sampleSelected && tourStep === 3} closeGuide={tourStep === 3 ? closeGuideExample : undefined} />;
+      case "comprobantes": return <VouchersPage initialDirection={purpose === "ventas" ? "sale" : "purchase"} key={`${period?.id ?? company?.id}-${month}-${purpose}`} guide={sampleSelected && tourStep === 3} closeGuide={tourStep === 3 ? closeGuideExample : undefined} />;
       case "cuentas": return <AccountsPage key={company?.id} />;
       case "documentacion": return <DocumentsPage key={`${period?.id ?? company?.id}-${purpose}`} purpose={purpose} />;
       case "calendario": return <CalendarPage key={`${company?.id}-${month}`} />;

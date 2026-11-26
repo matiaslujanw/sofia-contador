@@ -36,3 +36,9 @@ Los nuevos registros requieren aplicar la migración del libro operativo en el p
 ## Navegación por empresa
 
 El inicio es el selector de empresas activas. Cada empresa tiene una portada con accesos directos a vencimientos, comprobantes, cuentas corrientes, caja/bancos, impuestos y sueldos, IVA, conciliación, bienes de uso, asientos/Xubio, resultados, documentación, plan de cuentas, checklist y auditoría. Las herramientas de operación aparecen en el menú al entrar en una empresa. Cada acceso conserva organización, empresa y mes; los accesos contables incluyen `tipo` para abrir la pestaña correspondiente. «Todas las empresas» vuelve al selector.
+
+## Preparación impositiva en orden
+
+Dentro de cada empresa, «Comenzar preparación del mes» abre cinco pasos: plan de Xubio, compras de ARCA, ventas de ARCA, resumen Comafi y papel impositivo. Las importaciones se hacen en el paso correspondiente, con el tipo bloqueado para evitar cargas en el módulo equivocado. Compras/ventas incluyen alta manual y confirmación explícita de mes sin actividad, usando el checklist existente. La ausencia de compras se refleja como cero solo cuando fue confirmada y no hay comprobantes de esa dirección, incluidas otras monedas. El PDF bancario puede guardarse directamente como extracto del período; ese guardado no extrae sus movimientos.
+
+La extracción automática del PDF Comafi y el papel definitivo con saldos a pagar/a favor requieren una muestra del resumen, validación de retenciones/percepciones y parámetros/saldos anteriores. No se presentan como implementados en esta entrega.

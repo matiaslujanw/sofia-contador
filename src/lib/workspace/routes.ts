@@ -3,6 +3,7 @@ export const sections = {
   empresas: "Empresas",
   cierre: "Cierre mensual",
   control: "Control mensual",
+  preparacion: "Preparar mes",
   contabilidad: "Contabilidad",
   comprobantes: "Compras y ventas",
   cuentas: "Plan de cuentas",

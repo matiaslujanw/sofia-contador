@@ -81,10 +81,10 @@ function VoucherForm({ voucher, editable, close }: { voucher: Voucher; editable:
   </Modal>;
 }
 
-export function VouchersPage({ guide = false, closeGuide }: { guide?: boolean; closeGuide?: () => void }) {
+export function VouchersPage({ guide = false, closeGuide, initialDirection = "purchase" }: { guide?: boolean; closeGuide?: () => void; initialDirection?: Voucher["direction"] }) {
   const { company, period, state, month, locale, href, canEdit } = useWorkspace();
   const [manual,setManual]=useState(false);
-  const [direction, setDirection] = useState<Voucher["direction"]>("purchase");
+  const [direction, setDirection] = useState<Voucher["direction"]>(initialDirection);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("");
   const [selection, setSelected] = useState<Voucher | null>(null);

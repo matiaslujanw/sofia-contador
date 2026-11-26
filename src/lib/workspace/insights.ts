@@ -21,6 +21,7 @@ export function companyInsights(state: WorkspaceState, company: Company, month: 
   const purchase = comparable.filter((voucher) => voucher.direction === "purchase");
   const tasks = period ? state.tasks.filter((task) => task.period_id === period.id) : [];
   const noSales = tasks.some((task) => task.title === "Recepción de comprobantes emitidos" && task.status === "not_applicable");
+  const noPurchases = tasks.some((task) => task.title === "Recepción de comprobantes recibidos" && task.status === "not_applicable") && !periodVouchers.some((voucher) => voucher.direction === "purchase");
   const reviewedPurchases = purchase.filter((voucher) => voucher.review_status === "approved");
   const costAccounts = new Set(state.accounts.filter((account) => account.company_id === company.id && ["expense", "cost"].includes(account.kind)).map((account) => account.id));
   const expenses = reviewedPurchases.filter((voucher) => voucher.account_id && costAccounts.has(voucher.account_id));
@@ -33,13 +34,13 @@ export function companyInsights(state: WorkspaceState, company: Company, month: 
     const sales = entries.filter((voucher) => voucher.direction === "sale");
     const purchases = entries.filter((voucher) => voucher.direction === "purchase");
     const absentSales = entry && state.tasks.some((task) => task.period_id === entry.id && task.title === "Recepción de comprobantes emitidos" && task.status === "not_applicable");
-    return { month: entryMonth, sales: sales.length || (absentSales && !allEntries.some((voucher) => voucher.direction === "sale")) ? sumBase(sales) : null, purchases: purchases.length ? sumBase(purchases) : null };
+    return { month: entryMonth, sales: sales.length || (absentSales && !allEntries.some((voucher) => voucher.direction === "sale")) ? sumBase(sales) : null, purchases: purchases.length || (entry && !allEntries.some(v=>v.direction==="purchase") && state.tasks.some(t=>t.period_id===entry.id && t.title==="Recepción de comprobantes recibidos" && t.status==="not_applicable")) ? sumBase(purchases) : null };
   });
   return {
     sales: sale.length || (noSales && !periodVouchers.some((voucher) => voucher.direction === "sale")) ? sumBase(sale) : null,
-    purchases: purchase.length ? sumBase(purchase) : null,
+    purchases: purchase.length || noPurchases ? sumBase(purchase) : null,
     vatDebit: sale.length || (noSales && !periodVouchers.some((voucher) => voucher.direction === "sale")) ? sale.reduce((total, voucher) => total + cents(voucher.vat), 0n) : null,
-    vatCreditReported: purchase.length ? purchase.reduce((total, voucher) => total + cents(voucher.vat), 0n) : null,
+    vatCreditReported: purchase.length || noPurchases ? purchase.reduce((total, voucher) => total + cents(voucher.vat), 0n) : null,
     classifiedExpenses: expenses.length ? sumBase(expenses) : null,
     otherCurrencies: periodVouchers.length - comparable.length,
     reviewCount: periodVouchers.filter((voucher) => voucher.review_status !== "approved").length,

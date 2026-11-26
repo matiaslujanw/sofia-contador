@@ -1,5 +1,6 @@
 "use client";
 
+import { bookScope, depreciation } from "@/lib/accounting/engine";
 import { ClipboardCheck, Download } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -28,6 +29,8 @@ export function MonthlyControlPage() {
   const control = monthlyControl(state, company, month);
   const { period, vouchers } = control;
   const sheet = vatWorksheet(vouchers);
+  const book = bookScope(state, company, month);
+  const pendingAmortizations = book.filter(r=>r.payload.kind==='asset' && depreciation(r.payload,month)>0n && !book.some(j=>j.payload.kind==='journal' && j.payload.source_key===`asset:${r.id}:${month}`)).length;
   const editable = canEdit && period?.status === "open" && company.status === "active";
   const prefix = `sofia-${company.cuit}-${month}`;
   const amount = (value: bigint) => money(value, "ARS", locale);
@@ -46,6 +49,7 @@ export function MonthlyControlPage() {
   return <>
     <Heading title="Control mensual" description={`${companyName(company)} · CUIT ${cuitLabel(company.cuit)} · ${monthLabel(month, locale)}`}
       actions={period && <button className="button button-secondary" type="button" onClick={() => downloadCsv(monthlyChecklistCsv(company, month, control), `${prefix}-checklist.csv`)}><Download size={16} aria-hidden="true" /> Exportar checklist</button>} />
+    {pendingAmortizations>0&&<p className="notice notice-warning">Hay {pendingAmortizations} amortizaciones del mes sin registrar. <Link className="text-button" href={href('contabilidad',{}, {tipo:'assets'})}>Revisar bienes de uso</Link></p>}
     {!period ? <PeriodRequired /> : <>
       <section className="panel">
         <SectionHeading title="Pendientes detectados" subtitle="Estos controles usan los registros cargados; completarlos requiere revisión profesional." />

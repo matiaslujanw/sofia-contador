@@ -89,3 +89,9 @@ El ingreso conectado acepta nombre de usuario para cuentas con alias interno y c
 - El indicador de compras distingue cero confirmado de documentación pendiente y no presume cero si existen comprobantes de otras monedas.
 - Pendientes que requieren muestras: exportación real del plan Xubio, archivos ARCA y resumen PDF de texto Comafi. Falta desarrollar/validar la extracción bancaria y completar el papel fiscal con saldos previos, retenciones, percepciones y ajustes para determinar pagar/a favor. Se conserva el aviso explícito en el recorrido.
 - Validado con ESLint, TypeScript, build de producción, 55 pruebas unitarias y tres recorridos de navegador de preparación/importación. Se comprobó además la persistencia del PDF respaldatorio al recargar.
+
+## Cartera individual y medios efectivos
+
+- Cartera con filtros Clientes/Proveedores y detalle acumulado por CUIT; muestra facturas, notas de crédito, aperturas, cancelaciones y saldo. Medio explícito en nuevos cobros/pagos: efectivo, transferencia, tarjeta, cheque u otro. Se conserva «Sin informar» en historia sin ese dato.
+- Requisitos incorporados al circuito: obligación y pago separados, movimientos bancarios no fiscales, conciliación mensual y elección futura de amortización anual con control de pendientes. Se agregó registración mensual/anual, mes anual configurable, prorrateo de meses de uso y aviso de cuotas pendientes en Control mensual. Requiere la migración adicional `20261126000200_asset_frequency.sql`.
+- Verificación de esta ampliación: 58 pruebas unitarias; pruebas PostgreSQL de mensual/anual, prorrateo y rechazo de cuota fuera del mes; recorridos de cartera, pagos, conciliación, importación y amortización anual en Chromium. Se mantienen pendientes la activación Supabase y las muestras Comafi/ARCA/Xubio para completar el primer circuito fiscal.

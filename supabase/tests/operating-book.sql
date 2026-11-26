@@ -3,7 +3,7 @@ insert into auth.users(id) values('30000000-0000-4000-8000-000000000001'),('3000
 set local role authenticated;
 select set_config('request.jwt.claim.sub','30000000-0000-4000-8000-000000000001',true);
 do $$
-declare org uuid; company uuid:=gen_random_uuid(); other_company uuid:=gen_random_uuid(); p uuid; cash uuid:=gen_random_uuid(); expense uuid:=gen_random_uuid(); debt uuid:=gen_random_uuid(); other_account uuid:=gen_random_uuid(); asset uuid; movement uuid; statement uuid; accrual uuid; b jsonb; v jsonb; n integer;
+declare org uuid; company uuid:=gen_random_uuid(); other_company uuid:=gen_random_uuid(); p uuid; cash uuid:=gen_random_uuid(); expense uuid:=gen_random_uuid(); debt uuid:=gen_random_uuid(); other_account uuid:=gen_random_uuid(); asset uuid; annual_asset uuid; december uuid; movement uuid; statement uuid; accrual uuid; b jsonb; v jsonb; n integer;
 begin
  org:=(public.create_organization('Libro sintético')).id;
  insert into public.companies(id,organization_id,legal_name,cuit) values(company,org,'Empresa sintética','30719990017'),(other_company,org,'Otra empresa','30719990025');
@@ -28,6 +28,10 @@ begin
  perform public.save_book_record(p,v);
  begin perform public.save_book_record(p,v||jsonb_build_object('reference','AMORT-REPETIDA')); raise exception 'Cuota duplicada admitida'; exception when unique_violation then null; end;
  begin perform public.save_book_record(p,b||jsonb_build_object('kind','journal','reference','UNBALANCED','source_key','manual:desbalance','lines',jsonb_build_array(jsonb_build_object('account_id',expense,'debit','10.00','credit','0.00'),jsonb_build_object('account_id',cash,'debit','0.00','credit','9.00')))); raise exception 'Desbalance admitido'; exception when check_violation then null; end;
+ annual_asset:=public.save_book_record(p,b||jsonb_build_object('kind','asset','reference','BIEN-ANUAL','cost','1200.00','residual','0.00','life_months',12,'frequency','annual','annual_month','12','service_on','2026-11-01','disposal_on',null,'expense_account_id',expense,'accumulated_account_id',cash));
+ december:=(public.ensure_period(company,'2026-12-01')).id;
+ perform public.save_book_record(december,b||jsonb_build_object('kind','journal','date','2026-12-31','reference','CUOTA-ANUAL','source_key','asset:'||annual_asset::text||':2026-12','lines',jsonb_build_array(jsonb_build_object('account_id',expense,'debit','200.00','credit','0.00'),jsonb_build_object('account_id',cash,'debit','0.00','credit','200.00'))));
+ begin perform public.save_book_record(p,b||jsonb_build_object('kind','journal','reference','CUOTA-FUERA-MES','source_key','asset:'||annual_asset::text||':2026-11','lines',jsonb_build_array(jsonb_build_object('account_id',expense,'debit','100.00','credit','0.00'),jsonb_build_object('account_id',cash,'debit','0.00','credit','100.00')))); raise exception 'Anual fuera de mes admitida'; exception when check_violation then null; end;
  perform public.set_organization_member(org,'30000000-0000-4000-8000-000000000002','viewer');
  perform set_config('request.jwt.claim.sub','30000000-0000-4000-8000-000000000002',true);
  begin perform public.save_book_record(p,b||jsonb_build_object('kind','statement','amount','10.00','cash_account_id',cash,'match_id',null)); raise exception 'Escritura viewer admitida'; exception when insufficient_privilege then null; end;

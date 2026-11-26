@@ -22,10 +22,11 @@ export function journalLines(v: BookValues): JournalLine[] {
 export function depreciation(v: Extract<BookValues,{kind:"asset"}>, month: string) {
   const months = (m:string) => Number(m.slice(0,4))*12+Number(m.slice(5,7));
   const elapsed=months(month)-months(v.service_on);
-  if(elapsed<0 || elapsed>=v.life_months || (v.disposal_on && month>=v.disposal_on.slice(0,7))) return 0n;
+  const stop=v.disposal_on?months(v.disposal_on)-months(v.service_on)-1:v.life_months-1;
   const base=cents(v.cost)-cents(v.residual), life=BigInt(v.life_months);
-  // Cumulative rounding distributes cents deterministically without exceeding cost.
-  return base*BigInt(elapsed+1)/life-base*BigInt(elapsed)/life;
+  const earned=(n:number)=>base*BigInt(Math.max(0,Math.min(v.life_months,n+1,stop+1)))/life;
+  if(v.frequency==='annual')return month.slice(5,7)===v.annual_month?earned(elapsed)-earned(elapsed-12):0n;
+  return earned(elapsed)-earned(elapsed-1);
 }
 export function validateBook(state: WorkspaceState, company: Company, periodId: string, input: unknown, ownId?: string) {
   const v=bookSchema.parse(input);
@@ -127,4 +128,16 @@ export function bookObligations(state:WorkspaceState) {
   const paid=payments.reduce((sum,p)=>sum+(p.payload.kind==='cash'?cents(p.payload.amount):0n),0n);
   return [{id:`book:${r.id}`,company_id:r.company_id,period_id:r.period_id,title:`[Devengado] ${v.tax}`,due_on:v.due_on,amount:decimalFromCents(cents(v.amount)-paid),status:paid>=cents(v.amount)?'paid' as const:'pending' as const,filed_on:null,paid_on:paid>=cents(v.amount)?payments.map(p=>p.payload.date).sort().at(-1)??null:null,document_id:v.document_id,notes:`Devengado: ${v.amount}. Pagado: ${decimalFromCents(paid)}. ${v.description}. Se administra desde Contabilidad operativa; no acredita presentación de DDJJ.`}];
  });
+}
+
+export function partyLedger(state:WorkspaceState,company:Company,month:string,role:'customer'|'supplier',cuit:string) {
+ const records=bookScope(state,company,month);
+ const opening=records.find(r=>r.payload.kind==='opening'&&r.payload.role===role&&r.payload.cuit===cuit);
+ const cutoff=opening?.payload.date??'0000-00-00';
+ const rows:{id:string;date:string;type:string;reference:string;description:string;delta:bigint;method:string;order:number}[]=[];
+ if(opening&&opening.payload.kind==='opening')rows.push({id:opening.id,date:opening.payload.date,type:'Saldo inicial',reference:opening.payload.reference,description:opening.payload.description,delta:cents(opening.payload.amount),method:'',order:0});
+ for(const v of state.vouchers){if(v.company_id===company.id&&v.organization_id===company.organization_id&&v.currency===company.currency&&v.counterparty_cuit===cuit&&v.direction===(role==='customer'?'sale':'purchase')&&v.date>=cutoff&&v.date.slice(0,7)<=month)rows.push({id:v.id,date:v.date,type:v.receipt_type,reference:`${v.point_of_sale}-${v.receipt_number}`,description:v.counterparty_name??'',delta:cents(v.total),method:'',order:1});}
+ for(const r of records){const v=r.payload;if(v.kind==='cash'&&v.role===role&&v.cuit===cuit&&v.date>=cutoff)rows.push({id:r.id,date:v.date,type:role==='customer'?'Cobro':'Pago',reference:v.reference,description:v.description,delta:-cents(v.amount),method:v.payment_method??'Sin informar',order:2});}
+ let balance=0n;
+ return rows.sort((a,b)=>a.date.localeCompare(b.date)||a.order-b.order||a.id.localeCompare(b.id)).map(row=>({...row,balance:balance+=row.delta}));
 }

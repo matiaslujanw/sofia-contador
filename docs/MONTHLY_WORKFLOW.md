@@ -49,3 +49,8 @@ Se implementó la elección mensual/anual por bien y el mes de registración anu
 ## Primer circuito con muestras (26/11/2026)
 
 Se adaptó el lector a un plan de Xubio y a Mis Comprobantes Recibidos de ARCA. Ver formatos y límites en IMPORT_FORMATS.md. La empresa de la muestra aún no tiene ventas: usar «Este mes no hubo ventas» en cada período correspondiente, en vez de subir archivos vacíos; no se extrapola a meses futuros. Se confirmó la lectura Comafi con tres cuentas sin movimientos, conservando monedas separadas y sin registrar rechazos como débitos. La lectura transitoria no carga saldos al libro ni liquida impuestos. Sigue pendiente un PDF con cargos reales para validar la clasificación fiscal; Supabase operativo y DDJJ completas mantienen sus dependencias anteriores.
+
+
+## Septiembre con actividad bancaria
+
+Se validó el PDF Comafi recibido de septiembre: 22 movimientos, tres cuentas y saldos coherentes. En Preparar mes → Banco, Analizar PDF muestra saldos, categorías y cada renglón con origen; permite corregir categorías y descargar el papel. Tras verificar empresa/mes, Guardar PDF y papel bancario archiva ambos respaldos. Las cuentas sin actividad se conservan con su moneda y saldos, sin crear pagos ficticios. Los impuestos a los débitos/créditos y sellos quedan separados de IVA, y las transferencias requieren identificar su contraparte. Esta etapa prepara documentación; la incorporación al libro, el cruce con comprobantes, el crédito fiscal computable y los asientos requieren revisión posterior y la activación del módulo operativo existente.

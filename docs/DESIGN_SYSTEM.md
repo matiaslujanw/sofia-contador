@@ -12,14 +12,16 @@ Inter Variable se distribuye con la aplicación. El texto de interfaz usa españ
 | --- | --- |
 | Fondo de la aplicación | `#11131C` |
 | Superficie | `#1A1E2B` |
-| Identidad del símbolo | `#818CF8` |
-| Acción principal | `#B9ACFF` |
+| Identidad del símbolo | `#F5B8D0` |
+| Acción principal | `#F5B8D0` |
 | Confirmación | `#2DD4BF` |
 | Atención | `#FBBF24` |
 | Error | `#F87171` |
 | Texto principal | `#F8FAFC` |
 | Texto secundario | `#A0AEC0` |
 | Bordes de panel | `#31374A` |
+
+La identidad usa rosa pastel para acciones, navegación activa, gráficos de compras y detalles decorativos. Los fondos oscuros y los colores semánticos de confirmación, atención y error conservan su función.
 
 Los tokens de `src/app/globals.css` definen además superficies suaves, focos y colores secundarios de cada estado. Los indicadores acompañan el color con texto. La acción principal usa texto oscuro sobre el color de marca.
 

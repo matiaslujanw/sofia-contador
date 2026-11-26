@@ -62,3 +62,9 @@ El ingreso conectado acepta nombre de usuario para cuentas con alias interno y c
 - Requisitos y dependencias de los nueve puntos: [Circuito mensual](docs/MONTHLY_WORKFLOW.md). Los módulos contables del roadmap siguen pendientes; esta entrega organiza y controla el trabajo disponible.
 - Validación de esta entrega: ESLint, TypeScript, 42 pruebas unitarias, build de producción y build de demo portable aprobados. Pasaron seis recorridos Playwright en Chromium (dos nuevos y cuatro de regresión). Revisión visual de la demo en escritorio y móvil de 390 px sin desbordamiento horizontal. No se modificó SQL ni se ejecutaron pruebas de integración contra servicios reales.
 - Publicación bloqueada: push HTTPS y creación de árbol mediante la conexión GitHub rechazados con 403; la API informa «Resource not accessible by integration». Cambios conservados en la rama local `codex/control-mensual-iva-tem`. No se creó PR ni se modificó la aplicación publicada.
+
+## Identidad rosa pastel
+
+- Reemplazados los acentos morados por rosa pastel `#F5B8D0`: navegación, acciones, inicio, guías, formularios de acceso, gráficos e íconos SVG/PNG (incluido el acceso de iPad).
+- Se conserva la estructura oscura y la distinción de estados verde, ámbar y rojo.
+- Verificado con ESLint, TypeScript, 42 pruebas unitarias, build Next.js y demo portable. Revisión visual en escritorio y anchos de 820/390 px sin desbordamientos; contraste de texto principal en acciones y selección superior a 9:1. Publicación remota pendiente de resolver el permiso de escritura documentado.

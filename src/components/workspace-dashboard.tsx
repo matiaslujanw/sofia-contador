@@ -59,7 +59,7 @@ export function StudyDashboard() {
       </div>
     </section>
     <section className="study-metrics" aria-label="Indicadores del período">
-      <div><span className="metric-icon metric-violet"><ClipboardCheck size={19} aria-hidden="true" /></span><p><strong className="numbers">{open.length}</strong><span>Cierres por completar</span></p></div>
+      <div><span className="metric-icon metric-rose"><ClipboardCheck size={19} aria-hidden="true" /></span><p><strong className="numbers">{open.length}</strong><span>Cierres por completar</span></p></div>
       <div><span className="metric-icon metric-mint"><ListChecks size={19} aria-hidden="true" /></span><p><strong className="numbers">{pending}</strong><span>Tareas pendientes</span></p></div>
       <div><span className="metric-icon metric-amber"><Files size={19} aria-hidden="true" /></span><p><strong className="numbers">{missing}</strong><span>Respaldos pendientes</span></p></div>
     </section>
@@ -165,11 +165,11 @@ export function CompanyDashboard({ report = false }: { report?: boolean }) {
                 <Tooltip cursor={{ fill: "#323d50" }} contentStyle={{ background: "#131922", border: "1px solid #465166", borderRadius: 8, color: "#f8fafc" }}
                   labelStyle={{ color: "#f8fafc" }} formatter={(value) => new Intl.NumberFormat(locale, { style: "currency", currency: company.currency }).format(Number(value))} />
                 <Bar dataKey="sales" name="Ventas" fill="#2dd4bf" radius={[4, 4, 0, 0]} isAnimationActive={false} />
-                <Bar dataKey="purchases" name="Compras" fill="#818cf8" radius={[4, 4, 0, 0]} isAnimationActive={false} />
+                <Bar dataKey="purchases" name="Compras" fill="var(--brand)" radius={[4, 4, 0, 0]} isAnimationActive={false} />
               </BarChart>
             </ResponsiveContainer>
           </div>
-          <div className="chart-legend"><span><i style={{ background: "#2dd4bf" }} />Ventas</span><span><i style={{ background: "#818cf8" }} />Compras</span></div>
+          <div className="chart-legend"><span><i style={{ background: "#2dd4bf" }} />Ventas</span><span><i style={{ background: "var(--brand)" }} />Compras</span></div>
           <details className="mt-3 text-sm"><summary className="text-button cursor-pointer">Ver datos del gráfico</summary><div className="table-wrap"><table>
             <thead><tr><th scope="col">Período</th><th scope="col" className="cell-numeric">Ventas</th><th scope="col" className="cell-numeric">Compras</th></tr></thead>
             <tbody>{metrics.series.map((entry) => <tr key={entry.month}><td>{monthLabel(entry.month, locale)}</td><td className="cell-numeric">{amount(entry.sales) ?? "Pendiente"}</td><td className="cell-numeric">{amount(entry.purchases) ?? "Pendiente"}</td></tr>)}</tbody>

@@ -121,7 +121,7 @@
   min-height: 3rem;
   padding: 0.7rem 1rem;
   color: #10141c;
-  background: #818cf8;
+  background: var(--brand);
   border: 0;
   border-radius: 0.65rem;
   font-weight: 700;
@@ -129,23 +129,23 @@
   cursor: pointer;
 }
 
-.submit:hover { background: #a5b4fc; }
+.submit:hover { background: #fbd5e4; }
 .submit:disabled { cursor: progress; opacity: 0.7; }
 
 .textLink {
   justify-self: start;
-  color: #a5b4fc;
+  color: var(--accent);
   font-size: 0.9375rem;
   text-decoration: underline;
   text-underline-offset: 0.25em;
 }
 
-.textLink:hover { color: #c7d2fe; }
+.textLink:hover { color: #fce2ed; }
 
 .field input:focus-visible,
 .textLink:focus-visible,
 .submit:focus-visible {
-  outline: 2px solid #c7d2fe;
+  outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
 

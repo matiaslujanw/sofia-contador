@@ -1,3 +1,4 @@
+import { adaptNativeTable } from "./native";
 export const IMPORT_MAX_BYTES = 3 * 1024 * 1024;
 export const IMPORT_MAX_ROWS = 5_000;
 const MAX_COLUMNS = 80;
@@ -11,9 +12,10 @@ export type SourceRow = {
   invalidCells?: number[];
 };
 
-export type SourceTable = { headers: string[]; rows: SourceRow[] };
+export type SourceTable = { headers: string[]; rows: SourceRow[]; source?: "arca" | "xubio"; owner_cuit?: string; direction?: "purchases" | "sales"; warnings?: string[] };
 
 function validateTable(table: SourceTable): SourceTable {
+  table = adaptNativeTable(table);
   if (table.headers.length < 2 || table.headers.every((header) => !header)) {
     throw new Error("La primera fila con datos debe contener los encabezados de la tabla.");
   }

@@ -15,8 +15,8 @@ Sofía importa comprobantes de compras, comprobantes de ventas y planes de cuent
 | Formato | Preparación |
 | --- | --- |
 | CSV | UTF-8, UTF-16 con BOM o Windows-1252. Se admiten comas, punto y coma y tabulaciones como separadores. Un encabezado `sep=` de Excel puede indicar el separador. |
-| XLS y XLSX | Libro con una hoja. La primera fila con datos contiene los encabezados. Las columnas importadas requieren valores verificados, por lo que las fórmulas deben convertirse a valores antes de cargar el archivo. |
-| PDF | Se carga como documento respaldatorio. La extracción de datos contables queda pendiente de validación con archivos de muestra. |
+| XLS y XLSX | Libro con una hoja. La primera fila con datos contiene los encabezados, salvo el título reconocido de Mis Comprobantes de ARCA, cuya fila siguiente es el encabezado. Las columnas importadas requieren valores verificados, por lo que las fórmulas deben convertirse a valores antes de cargar el archivo. |
+| PDF Comafi | Respaldo y lectura de control para el diseño verificado de cuentas SIN MOVIMIENTOS, con saldos anterior/final iguales. Los diseños con movimientos se rechazan para extracción; requieren una muestra adicional. |
 
 La importación estructurada admite hasta 3 MiB, 5.000 filas de datos, 80 columnas y 2.000 caracteres por celda. El lector XLSX comprueba el tamaño de los componentes ZIP y limita el total descomprimido a 24 MiB. Para archivos XLSX comprimidos se requiere un navegador con soporte de descompresión DEFLATE, disponible en Safari para iPad desde iPadOS 16.4. Para las hojas de Excel se usa SheetJS Community Edition 0.20.3. [Opciones de lectura de SheetJS](https://docs.sheetjs.com/docs/api/parse-options/) · [Compatibilidad de descompresión de MDN](https://github.com/mdn/browser-compat-data/blob/main/api/DecompressionStream.json)
 
@@ -57,13 +57,13 @@ Los importadores del navegador y del servidor usan el mismo lector y las mismas 
 
 El tipo de comprobante admite diferencias de mayúsculas y espacios externos. Otras variaciones de descripción o código requieren un criterio consistente al preparar los archivos. La vista previa omite réplicas idénticas y detiene la confirmación cuando encuentra la misma clave con valores distintos dentro del archivo. La persistencia omite claves ya registradas y conserva la fila anterior.
 
-## Adaptadores pendientes de validar
+## Adaptadores: evidencia y límites
 
 | Origen | Evidencia pendiente |
 | --- | --- |
-| Mis Comprobantes de ARCA | Exportaciones sanitizadas de emitidos y recibidos, incluyendo notas de crédito y débito, moneda extranjera, alícuotas discriminadas y filas con datos faltantes. Hasta entonces se usa la asignación manual de columnas. |
-| Plan de cuentas de Xubio | Exportación sanitizada con códigos, ramas, categorías y estados. Hasta entonces se usa la asignación manual de columnas. |
-| Banco Comafi | Extractos anonimizados en PDF o formato tabular. Incluir casos con movimientos, cuentas sin movimientos, reversos y débitos rechazados. |
+| Mis Comprobantes de ARCA | Validado un XLSX real de recibidos de octubre de 2026 (tres filas), con título/CUIT, tipos numéricos, moneda `$` e IVA por alícuota. El CUIT propietario se verifica contra la empresa al confirmar. Faltan muestras de emitidos, notas y moneda extranjera; se mantienen controles de signo y total. |
+| Plan de cuentas de Xubio | Validado un XLSX real de 155 cuentas con Código/Nombre/Rama/Categoría/Activo y columnas bancarias. El rubro contable se deriva de Categoría, nunca de Tipo de Cuenta (subtipo bancario); Si/No se normaliza a activo/inactivo. Para las 66 filas sin código se asigna un identificador estable SIN-CODIGO basado en el nombre, con advertencia visible. Se conservan nombres exactos para exportar a Xubio. No se infiere jerarquía de cuentas desde Rama. |
+| Banco Comafi | Validado un PDF de texto de tres páginas de octubre de 2026: tres cuentas, dos ARS y una USD, todas SIN MOVIMIENTOS. La lectura muestra saldos y mes sin generar asientos. Se excluyen avisos, adhesiones y débitos rechazados fuera del detalle. Saldos incoherentes, cuentas repetidas, detalle sin declaración de ausencia o movimientos no validados producen error. Falta un resumen con movimientos efectivos para extraer comisiones e impuestos. |
 | Xubio, asientos | Plantilla oficial y muestra de importación verificada para implementar el exportador específico. |
 | Balances y libros mayores | Ejemplos del origen y definición de sus claves, importes y controles. |
 
@@ -86,3 +86,5 @@ El exportador usa el [instructivo oficial argentino](https://ayuda.xubio.com/es-
 Las columnas exactas del modelo son `FECHA`, `CONCEPTO`, `CIRCUITOCONTABLE`, `CUENTA`, `DEBE`, `HABER`, `ORGANIZACION`, `CENTRODECOSTO`, `DESCRIPCION`. Cada asiento tiene una fila cabecera con fecha numérica de Excel y formato DD/MM/AAAA, concepto y circuito; luego sus líneas por **nombre exacto** de cuenta. Los importes se escriben como texto decimal para conservar centavos, conforme a la recomendación del instructivo. Las contrapartes comerciales se informan cuando están identificadas; los nombres deben existir en Xubio. No se exporta un centro de costo que no haya sido definido.
 
 Se bloquean otras monedas porque el modelo verificado no contiene columnas de moneda/cotización. El CSV alternativo conserva códigos y valores exactos para revisión. La descarga no equivale a una importación aceptada y no marca registros como enviados. Se requiere confirmar cuentas/organizaciones/circuito y ausencia de registración previa, probar primero en una empresa de Xubio y comparar saldos. La aceptación real en Xubio continúa pendiente.
+
+La lectura PDF usa unpdf 2.2.3 en el navegador, hasta 3 MiB/50 páginas, sin enviar el contenido a servicios externos. La lectura es transitoria; guardar el original usa el almacenamiento privado existente. Las muestras reales utilizadas no forman parte del repositorio ni de las pruebas: se agregaron casos sintéticos equivalentes. La compatibilidad verificada se limita a esos diseños. No se importaron datos reales a producción durante esta validación.

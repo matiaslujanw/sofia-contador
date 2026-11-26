@@ -6,7 +6,7 @@ Espacio privado para estudios contables argentinos. Esta primera entrega permite
 
 ## Probar en local
 
-Con Node.js 22.12 o una versión posterior compatible, ejecutá estos comandos en la carpeta del proyecto:
+Con Node.js 24 o una versión posterior compatible, ejecutá estos comandos en la carpeta del proyecto:
 
 ```sh
 npm ci

@@ -259,6 +259,7 @@ export async function confirmLocalImport(initial: WorkspaceState, periodId: stri
   const existing = current.imports.find((entry) => entry.period_id === periodId && entry.kind === kind && entry.file_sha256 === fileHash);
   if (existing) return { row_count: existing.row_count, duplicate_count: existing.duplicate_count, reused: true };
   const source = await readSource(buffer, input.file.name);
+  if(source.owner_cuit && input.kind!=='accounts' && current.companies.find(c=>c.id===period.company_id)?.cuit!==source.owner_cuit)throw new Error("El CUIT del archivo ARCA no coincide con la empresa seleccionada.");
   const preview = previewImport(input.kind, source, input.mapping, { month: period.month.slice(0, 7), decimal: input.decimal });
   if (preview.issues.some((issue) => issue.severity === "error")) throw new Error("Revisá las filas con errores antes de importar.");
   let outcome = { row_count: 0, duplicate_count: 0, reused: false };

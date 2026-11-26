@@ -54,17 +54,17 @@ const VOUCHER_FIELDS: Field[] = [
   { key: "counterparty_name", label: "Nombre de contraparte", required: true, aliases: ["razon social", "denominacion", "denominacion contraparte"] },
   { key: "currency", label: "Moneda", required: true },
   { key: "exchange_rate", label: "Tipo de cambio", required: true, aliases: ["cotizacion", "tipo cambio"] },
-  { key: "taxable", label: "Neto gravado", required: true, aliases: ["importe neto gravado", "imp neto gravado"] },
+  { key: "taxable", label: "Neto gravado", required: true, aliases: ["neto gravado total", "importe neto gravado", "imp neto gravado"] },
   { key: "untaxed", label: "Neto no gravado", required: true, aliases: ["importe neto no gravado", "imp neto no gravado"] },
-  { key: "exempt", label: "Exento", required: true, aliases: ["importe exento", "operaciones exentas", "imp op exentas"] },
-  { key: "vat", label: "IVA total", required: true, aliases: ["iva", "importe iva"] },
+  { key: "exempt", label: "Exento", required: true, aliases: ["op. exentas", "importe exento", "operaciones exentas", "imp op exentas"] },
+  { key: "vat", label: "IVA total", required: true, aliases: ["total iva", "iva", "importe iva"] },
   { key: "other_taxes", label: "Otros tributos", required: true, aliases: ["importe otros tributos", "imp otros tributos"] },
   { key: "total", label: "Importe total", required: true, aliases: ["imp total", "total comprobante"] },
   ...VAT_RATES.map(([key, rate]): Field => ({
     key: `vat_rate_${key}`,
     label: `IVA ${rate.replace(".", ",")} %`,
     required: false,
-    aliases: [`importe iva ${rate}%`],
+    aliases: [`iva ${rate.replace(".", ",")}%`, `importe iva ${rate}%`],
   })),
 ];
 
@@ -74,7 +74,7 @@ const ACCOUNT_FIELDS: Field[] = [
   { key: "kind", label: "Rubro contable", required: true, aliases: ["tipo", "tipo de cuenta", "naturaleza", "rubro"] },
   { key: "parent_code", label: "Código de cuenta padre", required: false, aliases: ["codigo padre", "cuenta padre"] },
   { key: "category", label: "Categoría", required: false },
-  { key: "status", label: "Estado", required: true },
+  { key: "status", label: "Estado", required: true, aliases: ["activo"] },
 ];
 
 const ACCOUNT_KINDS = new Map<string, AccountKind>([
@@ -106,7 +106,7 @@ export function fieldsFor(kind: ImportKind): Field[] {
       return {
         ...field,
         label: `CUIT del ${party}`,
-        aliases: [...(field.aliases ?? []), `cuit ${party}`],
+        aliases: [...(field.aliases ?? []), `cuit ${party}`, `nro. doc. ${party}`],
         required: kind === "purchases",
       };
     }
@@ -128,7 +128,9 @@ export function suggestMapping(kind: ImportKind, headers: string[]): ColumnMappi
     const matches = normalized.flatMap((header, index) => allowed.includes(header) ? [index] : []);
     return matches.length === 1 ? [[key, matches[0]] as const] : [];
   });
-  return Object.fromEntries(hints.filter(([, column]) => hints.filter(([, other]) => other === column).length === 1));
+  const mapping = Object.fromEntries(hints.filter(([, column]) => hints.filter(([, other]) => other === column).length === 1));
+  if(kind==='accounts' && normalized.includes('rama') && normalized.includes('activo') && normalized.filter(h=>h==='kind').length===1) mapping.kind=normalized.indexOf('kind');
+  return mapping;
 }
 
 export function templateCsv(kind: ImportKind): string {
@@ -381,7 +383,9 @@ export function previewImport(
       assigned.add(column);
     }
   }
+  if (table.direction && kind !== table.direction) result.issues.push({row:0,field:"direction",severity:"error",message:"El archivo ARCA no corresponde a la dirección seleccionada."});
   if (result.issues.length) return result;
+  for(const message of table.warnings??[])result.issues.push({row:0,field:"code",severity:"warning",message});
 
   const seen = new Map<string, { payload: string; row: number }>();
   const accounts = new Map<string, { account: ImportAccount; row: number }>();

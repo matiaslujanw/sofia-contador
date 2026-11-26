@@ -54,7 +54,7 @@ async function periodScope(client: SupabaseClient, id: string) {
 }
 
 async function companyScope(client: SupabaseClient, id: string) {
-  return checked(await client.from("companies").select("id,organization_id").eq("id", id).single());
+  return checked(await client.from("companies").select("id,organization_id,cuit").eq("id", id).single());
 }
 
 async function saveRecord(client: SupabaseClient, table: string, id: string | undefined, values: Record<string, unknown>, scope?: [string, string]) {
@@ -234,6 +234,10 @@ export async function confirmWorkspaceImport(form: FormData): Promise<Result<Imp
     let table;
     try { table = await readSource(buffer, verified.name); }
     catch (error) { throw new WorkspaceError(error instanceof Error ? error.message : "No se pudo leer el archivo."); }
+    if (table.owner_cuit && context.kind !== 'accounts') {
+      const company = await companyScope(access.supabase,context.companyId);
+      if(company.cuit !== table.owner_cuit)throw new WorkspaceError("El CUIT del archivo ARCA no coincide con la empresa seleccionada.");
+    }
     const preview = previewImport(context.kind, table, context.mapping, { month: period.month.slice(0, 7), decimal: context.decimal });
     if (preview.issues.some((issue) => issue.severity === "error")) throw new WorkspaceError("La importación tiene filas inválidas. Revisá el mapeo y el archivo.");
     const normalized = context.kind === "accounts" ? preview.accounts : preview.vouchers;

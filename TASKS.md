@@ -76,3 +76,9 @@ El ingreso conectado acepta nombre de usuario para cuentas con alias interno y c
 - Migración preparada `20261126000100_operating_book.sql`: RPC con bloqueo por empresa, alcance, balance y saldo, RLS y auditoría. Aplicación en Supabase de producción pendiente de acceso; el módulo detecta esa situación sin interrumpir funcionalidades previas.
 - Verificación: 54 pruebas unitarias, pruebas SQL de migraciones/RLS/libro y 10 recorridos únicos Playwright en Chromium aprobados. Conexión real ARCA, DDJJ completas, conciliación agrupada y conversiones de moneda siguen pendientes. Ver [circuito](docs/MONTHLY_WORKFLOW.md), [formatos](docs/IMPORT_FORMATS.md) y [pruebas](docs/TESTING.md).
 - Los cambios de control mensual y rosa pastel previos ya fueron subidos a main y desplegados en Vercel. El bloqueo de GitHub informado en entradas históricas quedó resuelto al autorizar la integración.
+
+## Inicio por empresa · 26/11/2026
+
+- Inicio simplificado a tarjetas de empresas activas y acción Nueva empresa. Los selectores de mes y los accesos operativos aparecen al entrar en una empresa. La guía inicial automática se conserva dentro del espacio de trabajo; la ayuda sigue disponible desde el encabezado.
+- Nueva portada de empresa con accesos a cada tarea, carga y consulta solicitada. Las pestañas de Contabilidad se conservan en la URL y al cambiar de empresa/mes o recargar. Se adaptó el tutorial a la nueva portada.
+- Verificado: ESLint, TypeScript, 54 pruebas unitarias, build Next.js y demo portable. Se verificaron 21 recorridos únicos de navegador en Chromium; dos esperas de navegación se ajustaron y los nueve recorridos afectados pasaron al repetirlos. Revisadas las portadas en iPad (820 px) y teléfono (390 px), y el mantenimiento de empresa/mes/pestaña al navegar y recargar.

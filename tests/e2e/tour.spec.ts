@@ -49,8 +49,8 @@ async function completeTour(page: Page) {
   await expect(panel.getByText("Se guardó 1 fila. Se omitieron 0 duplicados.")).toBeVisible();
   await guide.getByRole("link", { name: "Finalizar recorrido" }).click();
   const finish = page.getByRole("dialog", { name: "Recorrido completado" });
-  await finish.getByRole("link", { name: "Volver al resumen" }).click();
-  await expect(page.getByRole("heading", { name: "Resumen del estudio" })).toBeVisible();
+  await finish.getByRole("link", { name: "Volver a empresas" }).click();
+  await expect(page.getByRole("heading", { name: "Empresas", exact: true })).toBeVisible();
 }
 
 test("guía la edición del cierre, la revisión y una importación real en tablet", async ({ page }) => {
@@ -59,7 +59,7 @@ test("guía la edición del cierre, la revisión y una importación real en tabl
   await page.getByRole("link", { name: "Recorrido guiado" }).click();
   await expect(page.getByRole("dialog", { name: "Conocé Sofía" })).toBeVisible();
   await completeTour(page);
-  await expect(page.getByRole("img", { name: "Avance general del cierre: 66%" })).toBeVisible();
+  await expect(page.getByRole("main").getByRole("link").filter({ hasText: "Nexo Custodia" })).toBeVisible();
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(820);
 });
 
@@ -67,6 +67,7 @@ test("retoma el paso guardado después de salir y recargar", async ({ page }) =>
   await page.goto("/inicio?recorrido=0");
   await page.getByRole("link", { name: "Empezar recorrido" }).click();
   await page.getByRole("link", { name: "Siguiente" }).click();
+  await expect(page.getByText("Paso 2 de 4")).toBeVisible();
   await page.getByRole("link", { name: "Salir del recorrido" }).click();
   await expect(page.getByRole("region", { name: "Recorrido guiado" })).toHaveCount(0);
   await page.reload();

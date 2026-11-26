@@ -390,3 +390,19 @@ td.cell-nowrap, .cell-numeric { white-space: nowrap; }
   .top-controls .control { max-width: 100%; }
   .topbar > .tour-entry { margin-left: auto; }
 }
+
+.company-picker { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr)); gap: 16px; }
+.company-picker-card { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; min-height: 150px; transition: border-color .15s; }
+.company-picker-name { display: grid; flex: 1 1 160px; min-width: 0; gap: 5px; }
+.company-picker-name strong { font-size: 1.15rem; overflow-wrap: anywhere; }
+.company-picker-name > span, .company-picker-name small { color: var(--muted); font-size: .83rem; overflow-wrap: anywhere; }
+.company-picker-open { display: inline-flex; align-items: center; gap: 6px; color: var(--accent); font-size: .86rem; font-weight: 650; width: 100%; }
+.company-tool-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.company-tool-card { display: flex; align-items: flex-start; gap: 12px; min-height: 140px; }
+.company-tool-card > span:nth-child(2) { flex: 1; min-width: 0; display: grid; gap: 8px; }
+.company-tool-card strong { font-size: .97rem; line-height: 1.4; }
+.company-tool-card small { color: var(--muted); font-size: .83rem; line-height: 1.5; }
+.company-tool-card > svg { flex: none; color: var(--accent); margin-top: 9px; }
+.company-picker-card:hover, .company-tool-card:hover { border-color: var(--brand); background: #29212c; }
+@media (max-width: 1120px) { .company-tool-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 550px) { .company-tool-grid { grid-template-columns: minmax(0, 1fr); } .company-tool-card { min-height: 0; } }

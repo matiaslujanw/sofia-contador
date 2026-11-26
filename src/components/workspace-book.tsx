@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -60,11 +61,12 @@ function BookForm({kind,close,previous}:{kind:BookValues['kind'];close:()=>void;
  </ActionForm></Modal>;
 }
 
-export function BookPage() {
+export function BookPage({ initialTab }: { initialTab?: string }) {
+ const router = useRouter();
  const {state,company,period,month,locale,canEdit,mutate,href}=useWorkspace();
  const [xubioCircuit,setXubioCircuit]=useState("default"),[xubioConfirmed,setXubioConfirmed]=useState(false);
  const [voucherJournalOpen,setVoucherJournalOpen]=useState(false);
- const [tab,setTab]=useState<keyof typeof tabs>('current');
+ const tab = (initialTab && Object.hasOwn(tabs,initialTab) ? initialTab : 'current') as keyof typeof tabs;
  const [form,setForm]=useState<BookValues['kind']|BookRecord|null>(null),[importOpen,setImportOpen]=useState(false),[voidRecord,setVoidRecord]=useState<BookRecord|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState('');
  if(!company)return <><Heading title="Contabilidad operativa"/><CompanyRequired/></>;
  if(!period)return <><Heading title="Contabilidad operativa"/><PeriodRequired/></>;
@@ -83,7 +85,7 @@ export function BookPage() {
  return <>
  <Heading title="Contabilidad operativa" description={`${companyName(company)} · ${monthLabel(month,locale)} · ${company.currency}`} actions={<Link href={href('control')} className="button button-secondary">Control mensual</Link>}/>
  {!enabled&&<p className="notice notice-warning">La base de datos todavía requiere la actualización del libro operativo. Podés consultar los comprobantes existentes; los nuevos registros se habilitan al aplicar la migración en Supabase.</p>}
- <div className="segments" aria-label="Módulos contables">{Object.entries(tabs).map(([key,label])=><button type="button" className="segment" aria-pressed={tab===key} key={key} onClick={()=>{setTab(key as keyof typeof tabs);setError('');}}>{label}</button>)}</div>
+ <div className="segments" aria-label="Módulos contables">{Object.entries(tabs).map(([key,label])=><button type="button" className="segment" aria-pressed={tab===key} key={key} onClick={()=>router.push(href('contabilidad', {}, {tipo:key}))}>{label}</button>)}</div>
  {error&&<p className="notice notice-error" role="alert">{error}</p>}
  {tab==='current'&&<section className="panel"><SectionHeading title="Cuentas corrientes" subtitle="Saldo inicial + comprobantes − cancelaciones, acumulado hasta el mes elegido." action={<div className="heading-actions">{editable&&<><button type="button" className="button button-primary" onClick={()=>setForm('opening')}>Saldo inicial</button><button type="button" className="button button-secondary" onClick={()=>setForm('cash')}>Registrar cobro/pago</button><button type="button" className="button button-secondary" onClick={()=>setImportOpen(!importOpen)}>Importar saldos</button></>}<button className="button button-secondary" type="button" onClick={()=>downloadBook(worksheetCsv([['tipo','cuit','nombre','apertura','comprobantes','cancelaciones','saldo'],...balances.map(b=>[b.role,b.cuit,b.name,decimalFromCents(b.opening),decimalFromCents(b.charges),decimalFromCents(b.settled),decimalFromCents(b.balance)])]),`sofia-${month}-cuentas-corrientes.csv`)}>Exportar saldos</button></div>}/>
  <div className="table-wrap"><table><thead><tr><th>Contraparte</th><th>Tipo</th><th>Apertura</th><th>Comprobantes</th><th>Cancelaciones</th><th>Saldo</th></tr></thead><tbody>{balances.map(b=><tr key={b.role+b.cuit}><td>{b.name}<small>{b.cuit}</small></td><td>{b.role==='customer'?'Cliente':'Proveedor'}</td><td>{fmt(b.opening)}</td><td>{fmt(b.charges)}</td><td>{fmt(b.settled)}</td><td>{fmt(b.balance)}</td></tr>)}</tbody></table></div><p className="muted text-sm mt-3">Un saldo negativo representa un anticipo o saldo a favor. El cálculo usa importes registrados, no el estado manual «Cancelado». Revisá la integridad de todos los comprobantes y aperturas.</p>

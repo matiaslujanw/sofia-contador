@@ -5,7 +5,7 @@ const demoCompany = "10000000-0000-4000-8000-000000000010";
 
 test("crea una empresa, guarda un checklist y registra cierre y reapertura", async ({ page }) => {
   await page.goto("/inicio");
-  await expect(page.getByRole("heading", { name: "Resumen del estudio" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Empresas", exact: true })).toBeVisible();
   await page.getByRole("link", { name: "Nueva empresa" }).click();
   const newCompany = page.getByRole("dialog", { name: "Nueva empresa" });
   await newCompany.getByLabel("Razón social").fill("Sur Ejemplo S.A.S.");
@@ -70,7 +70,7 @@ test("mantiene la navegación operable en tablet y móvil", async ({ page }) => 
   for (const viewport of [{ width: 820, height: 1180 }, { width: 390, height: 844 }]) {
     await page.setViewportSize(viewport);
     await page.goto("/inicio");
-    await expect(page.getByRole("heading", { name: "Resumen del estudio" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Empresas", exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Abrir menú" })).toBeVisible();
     await page.getByRole("button", { name: "Abrir menú" }).click();
     await page.getByRole("dialog").getByRole("link", { name: "Empresas", exact: true }).click();

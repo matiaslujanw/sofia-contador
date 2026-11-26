@@ -21,7 +21,7 @@ import { sections, workspaceHref, type Section, type Selection } from "@/lib/wor
 import { monthSchema } from "@/lib/workspace/validation";
 import { AuditPage, CalendarPage, SettingsPage } from "./workspace-admin";
 import { WorkspaceContext, type Context } from "./workspace-context";
-import { CompanyDashboard, StudyDashboard } from "./workspace-dashboard";
+import { CompanyDashboard, CompanyHome, StudyDashboard } from "./workspace-dashboard";
 import { AccountsPage, DocumentsPage, VouchersPage } from "./workspace-records";
 import { NextWorkspaceStep, WorkspaceGuide } from "./workspace-onboarding";
 import { BookPage } from "./workspace-book";
@@ -148,14 +148,15 @@ export function Workspace({ initial, section, mode, email, month, today, company
         <span className="brand-name"><strong>SOFÍA</strong><span>Gestión Contable</span></span>
       </Link>
       <nav aria-label="Navegación principal" className="nav-groups">
-        <ul className="nav-list">{primaryNav.map(({ id, icon: Icon }) =>
-          <li key={id}><Link className="nav-link" aria-current={section === id ? "page" : undefined} href={href(id)} onClick={close}>
+        {company && <Link className="text-button" href={href("inicio", { companyId: undefined })} onClick={close}>← Todas las empresas</Link>}
+        <ul className="nav-list">{primaryNav.filter(item => company || item.id === "inicio" || item.id === "empresas").map(({ id, icon: Icon }) =>
+          <li key={id}><Link className="nav-link" aria-current={section === id ? "page" : undefined} href={href(id, id === "empresas" ? { companyId: undefined } : undefined)} onClick={close}>
             <Icon size={19} strokeWidth={1.7} aria-hidden="true" />{sections[id]}
           </Link></li>)}
         </ul>
         <details className="nav-more" open={secondaryNav.some((item) => item.id === section) || undefined}>
           <summary>Más herramientas<ChevronDown size={15} aria-hidden="true" /></summary>
-          <ul className="nav-list">{secondaryNav.map(({ id, icon: Icon }) =>
+          <ul className="nav-list">{secondaryNav.filter(item => company || item.id === "configuracion").map(({ id, icon: Icon }) =>
             <li key={id}><Link className="nav-link" aria-current={section === id ? "page" : undefined} href={href(id)} onClick={close}>
               <Icon size={18} strokeWidth={1.7} aria-hidden="true" />{sections[id]}
             </Link></li>)}
@@ -178,10 +179,10 @@ export function Workspace({ initial, section, mode, email, month, today, company
   const view = (() => {
     if (!organization) return <SettingsPage />;
     switch (section) {
-      case "inicio": return company ? <CompanyDashboard /> : <StudyDashboard />;
+      case "inicio": return company ? <CompanyHome /> : <StudyDashboard />;
       case "empresas": return <CompaniesPage key={purpose ?? "empresas"} openNew={purpose === "nueva"} />;
       case "cierre": return <ClosingPage key={period?.id ?? `${company?.id}-${month}`} guide={sampleSelected && tourStep === 2} closeGuide={tourStep === 2 ? closeGuideExample : undefined} />;
-      case "contabilidad": return <BookPage key={`${company?.id}-${month}`} />;
+      case "contabilidad": return <BookPage initialTab={purpose} key={`${company?.id}-${month}-${purpose ?? "current"}`} />;
       case "control": return <MonthlyControlPage key={`${company?.id}-${month}`} />;
       case "comprobantes": return <VouchersPage key={period?.id ?? `${company?.id}-${month}`} guide={sampleSelected && tourStep === 3} closeGuide={tourStep === 3 ? closeGuideExample : undefined} />;
       case "cuentas": return <AccountsPage key={company?.id} />;
@@ -221,18 +222,18 @@ export function Workspace({ initial, section, mode, email, month, today, company
             {state.organizations.length > 1 && <label><span className="sr-only">Organización</span><Select value={organization.id} onChange={(event) => navigate(href(section, { organizationId: event.target.value, companyId: undefined }))}>
               {state.organizations.map((entry) => <option key={entry.id} value={entry.id}>{entry.name}</option>)}
             </Select></label>}
-            <label className="with-icon"><Building2 size={16} aria-hidden="true" /><span className="sr-only">Empresa</span>
+            {company && <label className="with-icon"><Building2 size={16} aria-hidden="true" /><span className="sr-only">Empresa</span>
               <Select value={company?.id ?? ""} onChange={(event) => navigate(href(section, { companyId: event.target.value || undefined }, scopeQuery))}>
-                <option value="">Vista del estudio</option>
+                <option value="">Todas las empresas</option>
                 {state.companies.filter((entry) => entry.status === "active" || entry.id === company?.id).map((entry) =>
                   <option key={entry.id} value={entry.id}>{companyName(entry)}</option>)}
               </Select>
-            </label>
-            <label className="with-icon"><CalendarDays size={16} aria-hidden="true" /><span className="sr-only">Período</span>
+            </label>}
+            {company && <label className="with-icon"><CalendarDays size={16} aria-hidden="true" /><span className="sr-only">Período</span>
               <Select value={month} onChange={(event) => event.target.value === "otro" ? setMonthPicker(true) : navigate(href(section, { month: event.target.value }, scopeQuery))}>
                 {months.map((item) => <option value={item} key={item}>{monthLabel(item, locale)}</option>)}<option value="otro">Otro período…</option>
               </Select>
-            </label>
+            </label>}
           </div>}
           {mode === "demo" && tourCompany && tourStep === null && <TourEntry selection={sample} />}
           {mode === "auth" && <button type="button" className="tour-entry workspace-guide-entry" aria-haspopup="dialog" onClick={openGuide}>
@@ -240,7 +241,7 @@ export function Workspace({ initial, section, mode, email, month, today, company
           </button>}
         </header>
         <main id="contenido" className="workspace-main" tabIndex={-1}>
-          {mode === "auth" && <NextWorkspaceStep {...guideProps} openGuide={openGuide} />}
+          {mode === "auth" && (company || section !== "inicio") && <NextWorkspaceStep {...guideProps} openGuide={openGuide} />}
           {mode === "demo" && tourCompany && tourStep !== null && <WorkspaceTour
             step={tourStep} sample={sample} current={selection} section={section} continuing={continuing} portable={portable}
             companyName={companyName(tourCompany)} taskTitle={tourTask?.title ?? "la tarea de ejemplo"} sampleSelected={sampleSelected}

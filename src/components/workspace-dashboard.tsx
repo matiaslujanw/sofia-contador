@@ -1,17 +1,16 @@
 "use client";
 
-import { bookObligations } from "@/lib/accounting/engine";
 import {
-  Activity, Building2, CalendarClock, CalendarDays, ChartNoAxesCombined, Check, ChevronDown, ChevronRight,
-  ClipboardCheck, Clock3, FileUp, Files, ListChecks, Plus, ReceiptText, ShieldAlert, Wallet, type LucideIcon,
+  ArrowLeft, Building2, CalendarClock, Calculator, ChartNoAxesCombined, ChevronRight,
+  ClipboardCheck, FileSpreadsheet, Files, Landmark, ListTree, NotebookPen, Package,
+  Plus, ReceiptText, ShieldAlert, Users, Wallet, type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
-import type { CSSProperties } from "react";
+import { companyName, cuitLabel, initials, money, monthLabel } from "@/lib/workspace/format";
+import { companyInsights } from "@/lib/workspace/insights";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { companyName, dayLabel, initials, money, monthLabel } from "@/lib/workspace/format";
-import { activityLabel, companyInsights, periodRows, scopeAlerts } from "@/lib/workspace/insights";
 import { useWorkspace } from "./workspace-context";
-import { Badge, Empty, Heading, Progress, SectionHeading } from "./workspace-ui";
+import { Badge, Empty, Heading, SectionHeading } from "./workspace-ui";
 
 export function Kpi({ title, value, note, icon: Icon, tone = "accent" }: {
   title: string; value: string | number | null; note: string; icon: LucideIcon; tone?: "accent" | "positive" | "warning" | "neutral";
@@ -23,104 +22,56 @@ export function Kpi({ title, value, note, icon: Icon, tone = "accent" }: {
 }
 
 export function StudyDashboard() {
-  const { state, month, today, canEdit, href, locale } = useWorkspace();
-  const rows = periodRows(state, month);
-  const open = rows.filter((row) => row.period?.status !== "closed");
-  const missing = rows.reduce((total, row) => total + row.tasks.filter((task) => task.status === "waiting").length, 0);
-  const pending = rows.reduce((total, row) => total + (row.period?.status === "closed" ? 0 : row.progress.pending), 0);
-  const companyIds = new Set(rows.map((row) => row.company.id));
-  const periodIds = new Set(rows.flatMap((row) => row.period ? [row.period.id] : []));
-  const alerts = scopeAlerts(state, month).filter((alert) => companyIds.has(alert.companyId));
-  const due = [...state.obligations,...bookObligations(state)].filter((entry) => periodIds.has(entry.period_id) && entry.due_on >= today && ["pending", "filed"].includes(entry.status))
-    .sort((a, b) => a.due_on.localeCompare(b.due_on));
-  const activity = state.activity.filter((event) => event.period_id ? periodIds.has(event.period_id) : (!event.company_id || companyIds.has(event.company_id)) && event.created_at.slice(0, 7) === month)
-    .sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 4);
-
-  const completedTasks = rows.reduce((total, row) => total + row.progress.complete, 0);
-  const totalTasks = rows.reduce((total, row) => total + row.progress.total, 0);
-  const progress = totalTasks ? Math.round(completedTasks * 100 / totalTasks) : null;
-
+  const { state, canEdit, href } = useWorkspace();
+  const companies = state.companies.filter(company => company.status === "active");
   return <>
-    <section className="study-hero" aria-labelledby="study-title">
-      <div className="study-hero-copy">
-        <p className="study-period"><CalendarDays size={16} aria-hidden="true" /> {monthLabel(month, locale)}</p>
-        <h1 id="study-title">Resumen del estudio</h1>
-        <p className="study-intro">Seguí el cierre mensual y revisá lo que necesita atención.</p>
-        <div className="study-actions">
-          <Link className="button button-primary" href={href("cierre")}><ClipboardCheck size={17} aria-hidden="true" /> Ver cierres</Link>
-          {canEdit && <Link className="button button-secondary" href={href("documentacion", {}, { tipo: "compras" })}><FileUp size={17} aria-hidden="true" /> Importar archivo</Link>}
-        </div>
-      </div>
-      <div className="study-hero-visual">
-        <div className="study-ring" style={{ "--ring-progress": `${progress ?? 0}%` } as CSSProperties}
-          role="img" aria-label={progress === null ? "Sin tareas aplicables" : `Avance general del cierre: ${progress}%`}>
-          <div className="study-ring-label" aria-hidden="true"><strong className="numbers">{progress === null ? "—" : `${progress}%`}</strong><span>Avance general</span></div>
-        </div>
-        {progress !== null && <p className="study-ring-caption"><strong>Avance general</strong>{completedTasks} de {totalTasks} tareas completadas</p>}
-      </div>
+    <Heading title="Empresas" description="Elegí una empresa para trabajar."
+      actions={canEdit && <Link className="button button-primary" href={href("empresas", {}, { tipo: "nueva" })}><Plus size={17} aria-hidden="true" /> Nueva empresa</Link>} />
+    {companies.length ? <div className="company-picker" aria-label="Empresas del estudio">
+      {companies.map(company => <Link key={company.id} className="panel company-picker-card" href={href("inicio", { companyId: company.id })}>
+        <span className="avatar company-hero-avatar" aria-hidden="true">{initials(companyName(company))}</span>
+        <span className="company-picker-name"><strong>{companyName(company)}</strong>
+          <span>{company.legal_name}</span><small>CUIT {cuitLabel(company.cuit)}</small></span>
+        <span className="company-picker-open">Abrir empresa <ChevronRight size={17} aria-hidden="true" /></span>
+      </Link>)}
+    </div> : <section className="panel"><Empty icon={Building2} title="Todavía no hay empresas activas" text={canEdit ? "Agregá tu primera empresa para comenzar." : "Las empresas aparecerán cuando el estudio las agregue."} /></section>}
+  </>;
+}
+
+const companyTools = [
+  { title: "Vencimientos fiscales", description: "Consultar fuentes oficiales y cargar fechas de ARCA, IIBB y TEM.", section: "calendario", icon: CalendarClock },
+  { title: "Compras y ventas", description: "Cargar comprobantes manuales, importar y revisar su clasificación.", section: "comprobantes", icon: ReceiptText },
+  { title: "Clientes y proveedores", description: "Saldos iniciales, cuentas corrientes, cobros y pagos parciales.", section: "contabilidad", tab: "current", icon: Users },
+  { title: "Caja y bancos", description: "Registrar ingresos, egresos, gastos bancarios y otros movimientos.", section: "contabilidad", tab: "cash", icon: Wallet },
+  { title: "Impuestos y sueldos", description: "Devengamientos, obligaciones, pagos y control fiscal bancario.", section: "contabilidad", tab: "accrual", icon: Calculator },
+  { title: "Papel de trabajo de IVA", description: "Revisar subtotales de IVA y descargar el detalle del período.", section: "control", anchor: "iva-worksheet", icon: FileSpreadsheet },
+  { title: "Conciliación bancaria", description: "Cargar extractos, controlar saldos y vincular movimientos.", section: "contabilidad", tab: "reconciliation", icon: Landmark },
+  { title: "Bienes de uso y amortizaciones", description: "Altas, vida útil y registro de la cuota mensual.", section: "contabilidad", tab: "assets", icon: Package },
+  { title: "Asientos y Xubio", description: "Preparar asientos balanceados y exportar el archivo XLS.", section: "contabilidad", tab: "journal", icon: NotebookPen },
+  { title: "Ingresos, egresos y rentabilidad", description: "Consultar el resultado y el flujo de fondos con gráficos.", section: "contabilidad", tab: "reports", icon: ChartNoAxesCombined },
+  { title: "Documentación e importaciones", description: "Guardar respaldos e importar planillas de la empresa.", section: "documentacion", icon: Files },
+  { title: "Plan de cuentas", description: "Consultar, cargar o importar las cuentas contables.", section: "cuentas", icon: ListTree },
+  { title: "Checklist y cierre mensual", description: "Controlar lo pendiente, completar tareas y cerrar el mes.", section: "cierre", icon: ClipboardCheck },
+  { title: "Auditoría y controles", description: "Revisar alertas y el historial de cambios de esta empresa.", section: "auditoria", icon: ShieldAlert },
+] as const;
+
+export function CompanyHome() {
+  const { company, month, locale, href } = useWorkspace();
+  if (!company) return null;
+  return <>
+    <div><Link className="text-button" href={href("inicio", { companyId: undefined })}><ArrowLeft size={16} aria-hidden="true" /> Todas las empresas</Link></div>
+    <section className="company-overview">
+      <span className="avatar company-hero-avatar" aria-hidden="true">{initials(companyName(company))}</span>
+      <Heading title={companyName(company)} description={`CUIT ${cuitLabel(company.cuit)} · ${monthLabel(month, locale)}`}
+        actions={<Link className="button button-secondary" href={href("cierre")}>Abrir cierre</Link>} />
     </section>
-    <section className="study-metrics" aria-label="Indicadores del período">
-      <div><span className="metric-icon metric-rose"><ClipboardCheck size={19} aria-hidden="true" /></span><p><strong className="numbers">{open.length}</strong><span>Cierres por completar</span></p></div>
-      <div><span className="metric-icon metric-mint"><ListChecks size={19} aria-hidden="true" /></span><p><strong className="numbers">{pending}</strong><span>Tareas pendientes</span></p></div>
-      <div><span className="metric-icon metric-amber"><Files size={19} aria-hidden="true" /></span><p><strong className="numbers">{missing}</strong><span>Respaldos pendientes</span></p></div>
-    </section>
-    <div className="study-grid">
-      <section className="panel study-panel">
-        <SectionHeading title="Cierres por empresa" subtitle={rows.length ? `${rows.length} ${rows.length === 1 ? "empresa activa" : "empresas activas"}` : undefined}
-          action={canEdit && <Link className="button button-secondary" href={href("empresas", {}, { tipo: "nueva" })}><Plus size={16} aria-hidden="true" /> Nueva empresa</Link>} />
-        {rows.length ? <ul className="data-list study-close-list">
-          {rows.map(({ company, period, progress }, index) =>
-            <li key={company.id}><Link className="data-row" href={href("cierre", { companyId: company.id })}>
-              <span aria-hidden="true" className={`avatar tone-${index % 3}`}>{initials(companyName(company))}</span>
-              <span className="data-main"><strong>{companyName(company)}</strong><small>{period ? `${progress.complete} de ${progress.total} tareas` : "Período sin iniciar"}</small></span>
-              {period && <div className="study-row-progress">
-                <Progress value={progress.percent} label={`Avance de ${companyName(company)}`} />
-                <span className="numbers">{progress.percent}%</span>
-              </div>}
-              <ChevronRight size={17} className="study-row-chevron" aria-hidden="true" />
-            </Link></li>)}
-        </ul> : <Empty icon={Building2} title="Todavía no hay empresas activas" text="Agregá una empresa para comenzar su cierre mensual." />}
-      </section>
-      <section className="panel study-panel">
-        <SectionHeading title="Requiere atención" action={alerts.length > 0 && <Link className="text-button" href={href("auditoria")}>Ver alertas</Link>} />
-        {alerts.length ? <ul className="data-list study-attention-list">{alerts.slice(0, 3).map((alert) => {
-          const company = state.companies.find((entry) => entry.id === alert.companyId);
-          return <li key={alert.id}>
-            <Link className="data-row" href={href(alert.section, { companyId: alert.companyId })}>
-              <span className="alert-marker"><ShieldAlert size={16} aria-hidden="true" /></span>
-              <span className="data-main"><strong>{alert.title}</strong><small>{company ? companyName(company) : alert.type}</small></span>
-              <ChevronRight size={16} className="study-row-chevron" aria-hidden="true" />
-            </Link>
-          </li>;
-        })}</ul> : <Empty icon={Check} title="Sin alertas para este período" />}
-      </section>
-    </div>
-    <div className="study-grid">
-      <section className="panel study-panel">
-        <SectionHeading title="Próximos vencimientos" action={<Link className="text-button" href={href("calendario")}>Abrir calendario</Link>} />
-        {due.length ? <ul className="data-list study-attention-list">
-          {due.slice(0, 3).map((entry) => {
-            const company = state.companies.find((company) => company.id === entry.company_id);
-            return <li key={entry.id}><div className="data-row">
-              <span className="date-tile" aria-label={dayLabel(entry.due_on, undefined, locale)}><strong>{Number(entry.due_on.slice(-2))}</strong><small>{dayLabel(entry.due_on, { month: "short" }, locale)}</small></span>
-              <span className="data-main"><strong>{entry.title}</strong><small>{company ? companyName(company) : ""}</small></span>
-              <Badge tone="warning">{entry.status === "filed" ? "Presentado" : "Pendiente"}</Badge>
-            </div></li>;
-          })}
-        </ul> : <Empty icon={CalendarClock} title="Sin vencimientos próximos" />}
-      </section>
-      <details className="panel study-panel study-activity">
-        <summary><Activity size={17} aria-hidden="true" /> Actividad reciente<ChevronDown size={17} aria-hidden="true" /></summary>
-        {activity.length ? <ul className="data-list study-attention-list">
-          {activity.map((event) => {
-            const company = state.companies.find((entry) => entry.id === event.company_id);
-            return <li key={event.id}><div className="data-row"><Clock3 size={17} className="muted" aria-hidden="true" /><span className="data-main">
-              <strong>{activityLabel(event.entity, event.action)}</strong><small>{company ? companyName(company) : state.organization?.name}</small></span>
-              <span className="data-end"><small>{dayLabel(event.created_at, undefined, locale)}</small></span></div></li>;
-          })}
-        </ul> : <Empty icon={Activity} title="Sin actividad registrada" />}
-        <Link className="text-button" href={href("auditoria")}>Ver auditoría</Link>
-      </details>
+    <div className="company-tool-grid" aria-label={`Herramientas de ${companyName(company)}`}>
+      {companyTools.map(tool => <Link key={tool.title} className="panel company-tool-card"
+        href={href(tool.section, {}, "tab" in tool ? { tipo: tool.tab } : undefined) + ("anchor" in tool ? `#${tool.anchor}` : "")}>
+        <span className="section-icon" aria-hidden="true"><tool.icon size={21} /></span>
+        <span><strong>{tool.title}</strong><small>{tool.description}</small></span>
+        <ChevronRight size={18} aria-hidden="true" />
+      </Link>)}
     </div>
   </>;
 }

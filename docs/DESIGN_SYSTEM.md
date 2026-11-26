@@ -27,8 +27,8 @@ Los tokens de `src/app/globals.css` definen además superficies suaves, focos y 
 
 ## Estructura y componentes
 
-- La barra superior mantiene visibles los selectores del contexto de trabajo. La navegación muestra las tareas frecuentes y agrupa la configuración, el plan de cuentas, los informes y la auditoría en **Más herramientas**.
-- El inicio pone el avance del mes en primer plano y reúne los pendientes en una fila de indicadores. La lista de empresas permite abrir cada cierre. La actividad se consulta al expandir su panel.
+- Dentro de una empresa, la barra superior mantiene visibles los selectores de empresa y mes. El selector de organización se conserva si corresponde. En el inicio global no se muestra el selector mensual. La navegación muestra las tareas frecuentes y agrupa la configuración, el plan de cuentas, los informes y la auditoría en **Más herramientas**.
+- El inicio muestra únicamente tarjetas de empresas activas, con nombre y CUIT, y la acción para agregar una empresa. Al abrir una tarjeta se presenta el espacio de esa empresa, con accesos a todas las tareas e importaciones. Los indicadores y las operaciones se consultan dentro de la empresa.
 - En la aplicación conectada, la guía refleja las altas y revisiones reales del estudio. El siguiente paso queda visible durante la configuración y el encabezado conserva el acceso a la guía y al mapa de secciones.
 - El recorrido de demostración muestra un paso por vez junto a la pantalla real. Abre las fichas de ejemplo con sus diálogos habituales y permite salir o continuar.
 - Los paneles agrupan indicadores, listas y gráficos. Las tablas conservan encabezados semánticos, ordenan los datos y alinean importes a la derecha. En espacios angostos, el desplazamiento horizontal queda dentro de la tabla.

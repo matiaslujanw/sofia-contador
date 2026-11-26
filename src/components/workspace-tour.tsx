@@ -65,7 +65,7 @@ export function WorkspaceTour({ step, sample, current, section, continuing, comp
     >
       {finished ? <div className="tour-finish">
         <span aria-hidden="true"><Check size={26} /></span>
-        <p>Volvé al resumen para ver el avance del mes o retomá el recorrido cuando quieras desde el encabezado.</p>
+        <p>Volvé a Empresas para elegir dónde trabajar o retomá el recorrido desde el encabezado.</p>
       </div> : <ol className="tour-preview">
         {tourSteps.map((item, index) => {
           const Icon = icons[index];
@@ -74,7 +74,7 @@ export function WorkspaceTour({ step, sample, current, section, continuing, comp
       </ol>}
       <div className="form-actions">
         <Link href={finished ? tourHref(1, sample) : exit} className="button button-secondary">{finished ? "Repetir recorrido" : "Explorar por mi cuenta"}</Link>
-        <Link href={finished ? home : tourHref(1, sample)} className="button button-primary">{finished ? "Volver al resumen" : "Empezar recorrido"}</Link>
+        <Link href={finished ? home : tourHref(1, sample)} className="button button-primary">{finished ? "Volver a empresas" : "Empezar recorrido"}</Link>
       </div>
     </Modal>;
   }

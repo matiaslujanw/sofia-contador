@@ -23,4 +23,12 @@ test('importa el formato recibido ARCA y rechaza el CUIT de otra empresa',async(
  await panel.getByRole('checkbox',{name:'Verifiqué la asignación y los datos del archivo'}).check();
  await panel.getByRole('button',{name:'Confirmar importación'}).click();
  await expect(panel.getByText('Se guardó 1 fila. Se omitieron 0 duplicados.')).toBeVisible();
+ await page.getByRole('link',{name:'Volver a la empresa',exact:true}).click();
+ await page.getByRole('link',{name:'Comenzar preparación del mes',exact:true}).click();
+ await page.getByRole('link',{name:'2. Compras',exact:true}).click();
+ await expect(page.getByRole('region',{name:'Cargas confirmadas'}).getByRole('cell',{name:'arca-sintetico.xlsx',exact:true})).toBeVisible();
+ await page.reload();
+ await expect(page.getByRole('region',{name:'Cargas confirmadas'}).getByRole('cell',{name:'arca-sintetico.xlsx',exact:true})).toBeVisible();
+ await page.getByRole('link',{name:'Ver datos guardados',exact:true}).click();
+ await expect(page.getByRole('row').filter({hasText:'Proveedor sintético ARCA'})).toHaveCount(1);
 });

@@ -19,6 +19,7 @@ export type Context = {
   mutate: (command: Command, success?: string) => Promise<{ id?: string }>;
   upload: (category: string, file: File) => Promise<void>;
   download: (document: Document) => Promise<void>;
+  readDocument: (document: Document) => Promise<File>;
   confirmImport: (input: { file: File; kind: ImportKind; mapping: ColumnMapping; decimal: "auto" | "comma" | "point" }) => Promise<{ row_count: number; duplicate_count: number; reused: boolean }>;
 };
 

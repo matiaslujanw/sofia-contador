@@ -14,8 +14,9 @@ import { signOut } from "@/lib/supabase/auth-actions";
 import { confirmWorkspaceImport, downloadWorkspaceDocument, mutateWorkspace, uploadWorkspaceDocument } from "@/lib/workspace/actions";
 import { demoTourCompanyId, demoTourPeriodId, demoTourTaskId } from "@/lib/workspace/demo";
 import { companyName, initials, monthLabel, shiftMonth } from "@/lib/workspace/format";
-import { confirmLocalImport, decodeLocal, downloadLocalDocument, emptyLocalSnapshot, localSnapshot, mutateLocal, subscribeLocal, uploadLocalDocument } from "@/lib/workspace/local";
+import { confirmLocalImport, decodeLocal, downloadLocalDocument, readLocalDocument, emptyLocalSnapshot, localSnapshot, mutateLocal, subscribeLocal, uploadLocalDocument } from "@/lib/workspace/local";
 import type { WorkspaceState } from "@/lib/workspace/model";
+import { maxDocumentBytes, verifyDocument } from "@/lib/workspace/documents";
 import { getOnboarding } from "@/lib/workspace/onboarding";
 import { sections, workspaceHref, type Section, type Selection } from "@/lib/workspace/routes";
 import { monthSchema } from "@/lib/workspace/validation";
@@ -123,6 +124,22 @@ export function Workspace({ initial, section, mode, email, month, today, company
       anchor.click();
       anchor.remove();
       if (mode === "demo") window.setTimeout(() => URL.revokeObjectURL(response.data.url), 10000);
+    },
+    async readDocument(document) {
+      if (!state.documents.some(d=>d.id===document.id && d.organization_id===organization?.id)) throw new Error('El documento no pertenece al espacio de trabajo.');
+      if (document.size_bytes>maxDocumentBytes) throw new Error('El archivo supera el límite de lectura.');
+      if (mode==='demo') return readLocalDocument(document);
+      const response=await downloadWorkspaceDocument(document.id);
+      if(!response.ok)throw new Error(response.message);
+      {
+        const original=await fetch(response.data.url,{cache:'no-store'});
+        if(!original.ok)throw new Error('No se pudo abrir el original guardado. Intentá de nuevo.');
+        const bytes=await original.arrayBuffer();
+        if(bytes.byteLength!==document.size_bytes)throw new Error('El original no coincide con el tamaño guardado.');
+        const file=new File([bytes],document.name,{type:document.mime_type});
+        await verifyDocument(file);
+        return file;
+      }
     },
     async confirmImport({ file, kind, mapping, decimal }) {
       if (!company || !period) throw new Error("Seleccioná una empresa y un período.");

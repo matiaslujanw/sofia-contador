@@ -241,11 +241,19 @@ export function uploadLocalDocument(initial: WorkspaceState, periodId: string, c
   return writeLocalDocument(initial, periodId, category, file);
 }
 
-export async function downloadLocalDocument(id: string) {
+async function storedLocalDocument(id: string) {
   const stored = window.location.protocol === "file:" ? portableDocuments.get(id)
     : await fileStore("readonly", (store) => store.get(id)) as StoredDocument | Blob | undefined;
   const original = requireEntry(stored, "El archivo no está disponible en este navegador.");
-  return URL.createObjectURL(original instanceof Blob ? original : new Blob([original.bytes], { type: original.mime }));
+  return original instanceof Blob ? original : new Blob([original.bytes], { type: original.mime });
+}
+
+export async function readLocalDocument(document: Document) {
+  return new File([await storedLocalDocument(document.id)],document.name,{type:document.mime_type});
+}
+
+export async function downloadLocalDocument(id: string) {
+  return URL.createObjectURL(await storedLocalDocument(id));
 }
 
 type LocalImport = { file: File; kind: ImportKind; mapping: ColumnMapping; decimal: "auto" | "comma" | "point" };

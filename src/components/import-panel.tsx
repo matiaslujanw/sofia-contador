@@ -219,6 +219,7 @@ export function ImportPanel({ month, disabled = false, initialKind = "purchases"
       {outcome && (
         <p className="notice notice-success" role="status">{outcomeMessage(outcome)}</p>
       )}
+      {file&&!outcome&&!saving&&<p className="notice notice-warning">Vista previa sin guardar. Revisá los datos y presioná Confirmar importación para conservarlos al salir.</p>}
 
       {table && preview && (
         <>

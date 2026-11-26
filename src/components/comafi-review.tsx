@@ -5,11 +5,12 @@ import { readComafiPdf, comafiCategories, comafiTotals, comafiWorksheetCsv, type
 import { cents, decimalFromCents, money, monthLabel } from '@/lib/workspace/format';
 import { useWorkspace } from './workspace-context';
 
-export function ComafiReview({file,month,locale}:{file:File;month:string;locale:string}) {
+export type SavedComafiAnalysis={result:ComafiResult;reviewed:boolean;paperSaved:boolean};
+export function ComafiReview({file,month,locale,initial}:{file:File;month:string;locale:string;initial?:SavedComafiAnalysis}) {
  const {company,period,canEdit,upload}=useWorkspace();
- const [result,setResult]=useState<ComafiResult|null>(null);
+ const [result,setResult]=useState<ComafiResult|null>(initial?.result??null);
  const [reading,setReading]=useState(false),[error,setError]=useState('');
- const [reviewed,setReviewed]=useState(false),[saving,setSaving]=useState(false),[saved,setSaved]=useState(false),[originalSaved,setOriginalSaved]=useState(false);
+ const [reviewed,setReviewed]=useState(initial?.reviewed??false),[saving,setSaving]=useState(false),[saved,setSaved]=useState(initial?.paperSaved??false),[originalSaved,setOriginalSaved]=useState(!!initial);
  const filename=`comafi-${result?.month??month}-papel-bancario.csv`;
  const editable=canEdit&&company?.status==='active'&&period?.status==='open'&&result?.month===month;
  const csv=()=>result?comafiWorksheetCsv(result,company?.cuit??'',file.name,reviewed):'';
@@ -20,6 +21,8 @@ export function ComafiReview({file,month,locale}:{file:File;month:string;locale:
    catch(reason){setError(reason instanceof Error?reason.message:'No se pudo analizar el PDF.');}
    finally{setReading(false);}
   }}>{reading?'Leyendo resumen…':'Analizar PDF Comafi'}</button>
+  {initial&&<p className="notice mt-3">{initial.paperSaved?'Trabajo recuperado del PDF y del papel bancario guardados.':'PDF guardado recuperado. El análisis todavía requiere revisión y guardado del papel.'}</p>}
+  {!initial&&!saved&&<p className="notice notice-warning mt-3">Archivo seleccionado para analizar. Para conservar el trabajo al salir, guardá el PDF y el papel bancario después de revisarlos.</p>}
   {error&&<p className="notice notice-error mt-3" role="alert">{error}</p>}
   {result&&<div className="mt-3" aria-live="polite">
    <h3>Resultado de lectura · {monthLabel(result.month,locale)}</h3>

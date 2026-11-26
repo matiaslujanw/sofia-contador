@@ -1,6 +1,7 @@
 "use server";
 
 import { createHash, randomUUID } from "node:crypto";
+import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { previewImport, readSource } from "@/lib/imports";
@@ -65,6 +66,12 @@ async function saveRecord(client: SupabaseClient, table: string, id: string | un
 }
 
 export async function mutateWorkspace(input: unknown): Promise<Result<{ id?: string }>> {
+  const result = await performWorkspaceMutation(input);
+  if (result.ok) revalidatePath('/[section]', 'page');
+  return result;
+}
+
+async function performWorkspaceMutation(input: unknown): Promise<Result<{ id?: string }>> {
   try {
     const { supabase, userId } = await liveAccess();
     const command = commandSchema.parse(input);
@@ -208,7 +215,9 @@ export async function uploadWorkspaceDocument(form: FormData): Promise<Result<{ 
   try {
     const access = await liveAccess();
     const context = documentContextSchema.parse(parseContext(form));
-    return { ok: true, data: await storeFile(access, context, await readFile(form)) };
+    const data = await storeFile(access, context, await readFile(form));
+    revalidatePath('/[section]', 'page');
+    return { ok: true, data };
   } catch (error) { return failure(error); }
 }
 
@@ -223,6 +232,12 @@ export async function downloadWorkspaceDocument(rawId: string): Promise<Result<{
 }
 
 export async function confirmWorkspaceImport(form: FormData): Promise<Result<ImportOutcome>> {
+  const result = await performWorkspaceImport(form);
+  if (result.ok) revalidatePath('/[section]', 'page');
+  return result;
+}
+
+async function performWorkspaceImport(form: FormData): Promise<Result<ImportOutcome>> {
   try {
     const access = await liveAccess();
     const context = importOptionsSchema.parse(parseContext(form));

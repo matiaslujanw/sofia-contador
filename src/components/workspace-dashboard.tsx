@@ -28,7 +28,6 @@ export function StudyDashboard() {
   return <>
     <Heading title={brand.title} description="Gestión contable de empresas. Organizá las cargas de cada mes, revisá qué falta y prepará los archivos para Xubio."
       actions={canEdit && <Link className="button button-primary" href={href("empresas", {}, { tipo: "nueva" })}><Plus size={17} aria-hidden="true" /> Nueva empresa</Link>} />
-    <section className="panel" aria-label="Cómo trabajar cada mes"><SectionHeading title="Tu trabajo contable, mes a mes"/><ol className="grid gap-3"><li><strong>1. Elegí una empresa y el mes.</strong> El plan de cuentas es permanente; se prepara una sola vez.</li><li><strong>2. Cargá la documentación.</strong> Compras, ventas, bancos y los reportes mensuales de Xubio.</li><li><strong>3. Revisá la auditoría.</strong> Consultá diferencias, tareas pendientes y asientos por completar antes de cerrar.</li></ol></section>
     <SectionHeading title="Empresas" subtitle="Elegí una empresa para continuar con sus cargas y su auditoría mensual."/>
     {companies.length ? <div className="company-picker" aria-label="Empresas del estudio">
       {companies.map(company => <Link key={company.id} className="panel company-picker-card" href={href("inicio", { companyId: company.id })}>
@@ -42,7 +41,7 @@ export function StudyDashboard() {
 }
 
 const companyTools = [
-  { title: "Vencimientos fiscales", description: "Consultar fuentes oficiales y cargar fechas de ARCA, IIBB y TEM.", section: "calendario", icon: CalendarClock },
+  { title: "Vencimientos fiscales", description: "Configurar fechas habituales y revisar vencimientos de ARCA, IIBB y TEM.", section: "calendario", icon: CalendarClock },
   { title: "Compras y ventas", description: "Cargar comprobantes manuales, importar y revisar su clasificación.", section: "comprobantes", icon: ReceiptText },
   { title: "Clientes y proveedores", description: "Saldos iniciales, cuentas corrientes, cobros y pagos parciales.", section: "contabilidad", tab: "current", icon: Users },
   { title: "Caja y bancos", description: "Registrar ingresos, egresos, gastos bancarios y otros movimientos.", section: "contabilidad", tab: "cash", icon: Wallet },

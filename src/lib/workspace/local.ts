@@ -1,10 +1,11 @@
+import {withFiscalRule} from "./fiscal-recurrence";
 import { validateBook } from "@/lib/accounting/engine";
 import { previewImport, readSource, type ColumnMapping, type ImportKind } from "@/lib/imports";
 import { readDemoStorage, writeDemoStorage } from "./demo-storage";
 import { verifyDocument } from "./documents";
 import { cents, taskProgress } from "./format";
 import { defaultClassification, defaultTaskTitles, type AuditEvent, type Document, type Period, type WorkspaceState } from "./model";
-import { commandSchema, type Command } from "./validation";
+import { absenceDirection, commandSchema, type Command } from "./validation";
 
 const key = "sofia-contable-demo-v1";
 const changed = "sofia-workspace-change";
@@ -131,6 +132,8 @@ export function mutateLocal(initial: WorkspaceState, input: Command) {
       }
       case "task.save": {
         const period = openPeriod(state, command.periodId);
+        const direction=absenceDirection(command.title);
+        if(command.status==='not_applicable'&&direction&&state.vouchers.some(v=>v.company_id===period.company_id&&v.period_id===period.id&&v.direction===direction))throw new Error('Ya hay comprobantes de ese tipo en el período.');
         const tasks = state.tasks.filter((task) => task.period_id === period.id);
         const position = command.id ? requireEntry(tasks.find((task) => task.id === command.id)).position : Math.max(0, ...tasks.map((task) => task.position)) + 1;
         const record = { id, position, company_id: period.company_id, organization_id: org.id, period_id: period.id, title: command.title, notes: command.notes, status: command.status, document_id: command.documentId };
@@ -181,7 +184,7 @@ export function mutateLocal(initial: WorkspaceState, input: Command) {
       case "obligation.save": {
         const period = openPeriod(state, command.periodId);
         if (command.id) requireEntry(state.obligations.find((entry) => entry.id === id && entry.period_id === period.id));
-        const record = { id, company_id: period.company_id, period_id: period.id, title: command.title, due_on: command.dueOn, amount: command.amount, status: command.status, filed_on: command.filedOn, paid_on: command.paidOn, document_id: command.documentId, notes: command.notes };
+        const record = { id, company_id: period.company_id, period_id: period.id, title: command.title, due_on: command.dueOn, amount: command.amount, status: command.status, filed_on: command.filedOn, paid_on: command.paidOn, document_id: command.documentId, notes: withFiscalRule(command.notes,command.recurrence) };
         return withEvent({ ...state, obligations: reorder(state.obligations, record) }, "tax_obligations", id, period.company_id, period.id, action);
       }
       case "organization.create":

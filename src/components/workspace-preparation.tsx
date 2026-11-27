@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { NoActivityControl } from "./no-activity-control";
 import { companyName, monthLabel } from "@/lib/workspace/format";
 import { BankPreparation } from "./bank-preparation";
 import { PreparationImports } from "./preparation-imports";
@@ -10,13 +10,12 @@ import { ImportPanel } from "./import-panel";
 import { ManualVoucher } from "./manual-voucher";
 import { useWorkspace } from "./workspace-context";
 import { CompanyRequired, PeriodRequired } from "./workspace-operations";
-import { Badge, Heading, Modal, ActionForm, SectionHeading } from "./workspace-ui";
+import { Badge, Heading, SectionHeading } from "./workspace-ui";
 
 const steps = { compras: "1. Compras", ventas: "2. Ventas", banco: "3. Resumen bancario", impuestos: "4. Papel impositivo" } as const;
 export function PreparationPage({ step: rawStep }: { step?: string }) {
- const {state,company,period,month,locale,canEdit,href,mutate,confirmImport}=useWorkspace();
- const router=useRouter();
- const [manual,setManual]=useState(false),[absence,setAbsence]=useState(false);
+ const {state,company,period,month,locale,canEdit,href,confirmImport}=useWorkspace();
+ const [manual,setManual]=useState(false);
  const step=(rawStep&&Object.hasOwn(steps,rawStep)?rawStep:'compras') as keyof typeof steps;
  if(!company)return <><Heading title="Preparar mes"/><CompanyRequired/></>;
  if(!period)return <><Heading title="Preparar mes"/><PeriodRequired/></>;
@@ -32,10 +31,11 @@ export function PreparationPage({ step: rawStep }: { step?: string }) {
  <Heading title="Preparar mes" description={`${companyName(company)} · ${monthLabel(month,locale)}`} actions={<Link className="button button-secondary" href={href('inicio')}>Volver a la empresa</Link>}/>
  <p className="notice mb-3">El plan de cuentas es permanente para esta empresa: {accountCount} cuentas activas. <Link className="text-button" href={href('cuentas')}>Ver o modificar plan de cuentas</Link></p>
  <nav className="segments" aria-label="Pasos para preparar el mes">{Object.entries(steps).map(([key,label])=><Link className="segment" aria-current={step===key?'step':undefined} style={step===key?{borderColor:'var(--brand)',color:'var(--accent)'}:undefined} key={key} href={href('preparacion',{}, {tipo:key})}>{label}</Link>)}</nav>
- {(step==='compras'||step==='ventas')&&<section className="panel"><SectionHeading title={step==='compras'?'Compras del mes':'Ventas del mes'} subtitle="Importá el archivo de ARCA y completá manualmente los comprobantes que falten." action={<Badge tone={noActivity?'positive':'neutral'}>{noActivity?`Sin ${step} confirmado`:`${vouchers.length} comprobantes cargados`}</Badge>}/>
+ {(step==='compras'||step==='ventas')&&<section className="panel"><SectionHeading title={step==='compras'?'Compras del mes':'Ventas del mes'} subtitle="Importá el archivo de ARCA y completá manualmente los comprobantes que falten." action={<Badge tone={noActivity?'positive':'neutral'}>{noActivity?`Mes sin actividad declarado`:`${vouchers.length} comprobantes cargados`}</Badge>}/>
  {!accountCount&&<p className="notice notice-warning mb-3">El plan de cuentas todavía no tiene cuentas activas. Cargalo una sola vez en Plan de cuentas para poder imputar los comprobantes.</p>}
  {task?.status==='not_applicable'&&vouchers.length>0&&<p className="notice notice-warning mb-3">Hay comprobantes cargados y una marca de mes sin actividad. Revisá la recepción en el checklist del mes.</p>}
- <div className="heading-actions mb-3">{editable&&<><button className="button button-primary" type="button" onClick={()=>setManual(true)}>Cargar comprobante manual</button><button className="button button-secondary" type="button" disabled={vouchers.length>0||noActivity} onClick={()=>setAbsence(true)}>Este mes no hubo {step}</button></>}<Link className="button button-secondary" href={href('comprobantes',{}, {tipo:step})}>Revisar comprobantes cargados</Link></div>
+ <div className="heading-actions mb-3">{editable&&<><button className="button button-primary" type="button" onClick={()=>setManual(true)}>Cargar comprobante manual</button></>}<Link className="button button-secondary" href={href('comprobantes',{}, {tipo:step})}>Revisar comprobantes cargados</Link></div>
+ <NoActivityControl key={direction} direction={direction}/>
  <ImportPanel lockedKind key={step} month={month} disabled={!editable} initialKind={direction==='purchase'?'purchases':'sales'} onConfirm={confirmImport}/>
  <p className="muted text-sm mt-3">La ausencia de archivos no se toma como cero. La marca de mes sin actividad queda guardada para esta empresa y período. Los archivos importados se controlan por identidad para evitar duplicados.</p>
  </section>}
@@ -44,6 +44,5 @@ export function PreparationPage({ step: rawStep }: { step?: string }) {
  {step==='impuestos'&&<section className="panel"><SectionHeading title="Revisar el papel de trabajo" subtitle="IVA de compras y ventas, cargos bancarios y créditos fiscales requieren controles separados antes de liquidar."/><p className="muted mb-3">El cálculo actual muestra subtotales de comprobantes revisados. Para determinar el impuesto a pagar o saldo a favor faltan saldos anteriores, retenciones, percepciones y ajustes verificados. No se presume que todo el IVA bancario sea computable.</p><div className="heading-actions"><Link className="button button-primary" href={href('control')+'#iva-worksheet'}>Abrir papel de IVA</Link><Link className="button button-secondary" href={href('contabilidad',{}, {tipo:'accrual'})}>Control de impuestos bancarios</Link><Link className="button button-secondary" href={href('contabilidad',{}, {tipo:'journal'})}>Preparar asientos</Link></div></section>}
  <div className="heading-actions">{index>0&&<Link className="button button-secondary" href={href('preparacion',{}, {tipo:keys[index-1]})}>Anterior</Link>}{index<keys.length-1&&<Link className="button button-primary" href={href('preparacion',{}, {tipo:keys[index+1]})}>Siguiente: {steps[keys[index+1]].slice(3)}</Link>}</div>
  {manual&&<ManualVoucher direction={direction} close={()=>setManual(false)}/>}
- {absence&&<Modal title={`Confirmar mes sin ${step}`} description={`${companyName(company)} · ${monthLabel(month,locale)}`} close={()=>setAbsence(false)}><ActionForm label={`Confirmar sin ${step}`} close={()=>setAbsence(false)} submit={async()=>{if(vouchers.length)throw new Error('Ya hay comprobantes en este período.');await mutate({type:'task.save',periodId:period.id,id:task?.id,title,status:'not_applicable',notes:`Mes sin ${step} confirmado por la persona responsable.`,documentId:task?.document_id??null},`Mes sin ${step} confirmado.`);router.refresh();}}><p className="field-wide">Confirmás que esta empresa no tuvo {step} en el mes. La decisión queda en el checklist y su historial.</p></ActionForm></Modal>}
  </>;
 }

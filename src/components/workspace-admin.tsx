@@ -1,5 +1,6 @@
 "use client";
 
+import {fiscalCalendar,fiscalRules,fiscalNotes,ruleFromDate} from "@/lib/workspace/fiscal-recurrence";
 import { bookObligations } from "@/lib/accounting/engine";
 import { Activity, CalendarClock, ClipboardList, Plus, Settings, ShieldAlert, Users } from "lucide-react";
 import Link from "next/link";
@@ -131,14 +132,15 @@ const obligations = {
 
 export function CalendarPage() {
   const { state, company, month, canEdit, locale, today } = useWorkspace();
-  const [dialog, setDialog] = useState<Obligation | "new" | null>(null);
+  const [dialog, setDialog] = useState<Obligation | "new" | "habitual" | null>(null);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("");
   const monthlyPeriods = state.periods.filter((record) => record.month.startsWith(month) && (!company || record.company_id === company.id));
   const scope = new Set(monthlyPeriods.map((record) => record.id));
   const companies = new Map(state.companies.map((record) => [record.id, record]));
   const periodStatus = new Map(monthlyPeriods.map((record) => [record.id, record.status]));
-  const baseRows = [...state.obligations,...bookObligations(state)].filter((obligation) => scope.has(obligation.period_id));
+  const baseRows = [...fiscalCalendar(state,month,company?.id),...bookObligations(state).filter(obligation=>scope.has(obligation.period_id))];
+  const recurring=fiscalRules(state,company?.id).filter(r=>r.rule.active);
   const needle = query.trim().toLocaleLowerCase(locale);
   const filtered = baseRows.filter((obligation) => {
     const entry = companies.get(obligation.company_id);
@@ -152,8 +154,12 @@ export function CalendarPage() {
   return <>
     <div className="notice">{company ? `CUIT ${company.cuit} · terminación ${company.cuit.slice(-1)}. ` : "Elegí una empresa para verificar la terminación de CUIT. "}<a className="text-button" href="https://www.arca.gob.ar/vencimientos/" target="_blank" rel="noreferrer">Consultar agenda oficial ARCA</a> · Verificá impuesto, régimen, mes y prórrogas antes de guardar la fecha. IIBB y TEM requieren la fuente provincial o municipal.</div>
     <Heading title="Calendario fiscal" description={`${monthLabel(month, locale)} · ${company ? companyName(company) : "Vista del estudio"}`} actions={canCreate ? createButton : undefined} />
+    <section className="panel" aria-label="Vencimientos habituales"><SectionHeading title="Vencimientos habituales" subtitle="Se configuran una vez por empresa. El día se repite al cambiar de mes; los importes y pagos no se copian." action={canCreate&&<button type="button" className="button button-secondary" onClick={()=>setDialog('habitual')}>Configurar vencimiento habitual</button>}/>
+      {recurring.length?<ul className="grid gap-3">{recurring.map(({source,rule})=><li key={source.company_id+rule.seriesId}><strong>{source.title}</strong> · día {rule.day} {rule.offset?'del mes siguiente':'de cada mes'} · desde {monthLabel(rule.from,locale)}{!company&&<small> · {companyName(companies.get(source.company_id)!)}</small>}</li>)}</ul>:<p className="muted">Todavía no configuraste fechas habituales para esta empresa.</p>}
+      <p className="muted text-sm mt-3">Son fechas de referencia del estudio. Revisá feriados y prórrogas oficiales y corregí el vencimiento puntual cuando corresponda. Si el día no existe, se usa el último día del mes.</p>
+    </section>
     <section className="panel">
-      <SectionHeading title="Obligaciones del período" icon={CalendarClock} subtitle="Vencimientos cargados por el estudio." />
+      <SectionHeading title="Obligaciones del período" icon={CalendarClock} subtitle="Fechas habituales previstas y vencimientos registrados. Registrar un mes no copia pagos anteriores." />
       {baseRows.length > 0 && <div className="table-toolbar">
         <Search label="Buscar obligación o empresa" value={query} onChange={setQuery} />
         <Select aria-label="Filtrar por estado" value={status} onChange={(event) => setStatus(event.target.value)}>
@@ -166,42 +172,48 @@ export function CalendarPage() {
         <thead><tr><th scope="col">Obligación</th><th scope="col">Vencimiento</th><th scope="col" className="cell-numeric">Importe</th><th scope="col">Estado</th><th scope="col"><span className="sr-only">Acciones</span></th></tr></thead>
         <tbody>{filtered.map((record) => {
           const entry = companies.get(record.company_id);
-          const editable = canEdit && !record.id.startsWith("book:") && entry?.status === "active" && periodStatus.get(record.period_id) === "open";
+          const projected=record.id.startsWith("recurring:");
+          const editable = canEdit && !record.id.startsWith("book:") && entry?.status === "active" && (projected||periodStatus.get(record.period_id) === "open");
           const overdue = record.due_on < today && (record.status === "pending" || record.status === "filed");
           return <tr key={record.id}>
-            <td className="cell-main"><strong>{record.title}</strong>{entry && <small>{companyName(entry)}</small>}</td>
+            <td className="cell-main"><strong>{record.title}</strong>{entry && <small>{companyName(entry)}</small>}{projected&&<small>Habitual · fecha por verificar</small>}</td>
             <td className="cell-nowrap"><time dateTime={record.due_on}>{dayLabel(record.due_on, undefined, locale)}</time>{overdue && <small>Vencido</small>}</td>
             <td className="cell-numeric">{record.amount === null ? "—" : money(record.amount, entry?.currency ?? state.organization?.currency, locale)}</td>
             <td><Badge tone={overdue ? "negative" : obligations[record.status].tone}>{obligations[record.status].label}</Badge></td>
-            <td><div className="table-actions"><button className="button button-secondary" type="button" onClick={() => setDialog(record)}>{editable ? "Editar" : "Ver detalle"}</button></div></td>
+            <td><div className="table-actions"><button className="button button-secondary" type="button" onClick={() => setDialog(record)}>{editable ? projected?"Registrar / ajustar este mes":"Editar" : "Ver detalle"}</button></div></td>
           </tr>;
         })}</tbody>
       </table></div> : <Empty icon={CalendarClock} title={baseRows.length ? "Sin coincidencias" : "Sin vencimientos cargados"}
-        text={baseRows.length ? "Probá cambiar la búsqueda o el estado." : "Los vencimientos se registran manualmente por empresa y período."} />}
+        text={baseRows.length ? "Probá cambiar la búsqueda o el estado." : "Configurá las fechas habituales una vez o cargá un vencimiento puntual."} />}
     </section>
-    {dialog && <ObligationModal record={dialog === "new" ? undefined : dialog} close={() => setDialog(null)} />}
+    {dialog && <ObligationModal habitual={dialog==='habitual'} record={dialog === "new"||dialog==='habitual' ? undefined : dialog} close={() => setDialog(null)} />}
   </>;
 }
 
-function ObligationModal({ record, close }: { record?: Obligation; close: () => void }) {
+function ObligationModal({ record, habitual=false, close }: { record?: Obligation; habitual?:boolean; close: () => void }) {
   const { state, company, month, locale, canEdit, mutate, href } = useWorkspace();
+  const projected=record?.id.startsWith("recurring:");
+  const previous=fiscalNotes(record?.notes??'');
+  const [repeat,setRepeat]=useState(habitual||!!previous.rule?.active);
+  const [exception,setException]=useState(false);
   const monthPeriods = state.periods.filter((period) => period.month.slice(0, 7) === month);
   const active = state.companies.filter((entry) => entry.status === "active" &&
     monthPeriods.find((period) => period.company_id === entry.id)?.status !== "closed");
   const [companyId, setCompanyId] = useState(record?.company_id ?? company?.id ?? active[0]?.id ?? "");
   const selected = state.companies.find((entry) => entry.id === companyId);
-  const period = record ? state.periods.find((entry) => entry.id === record.period_id) : monthPeriods.find((entry) => entry.company_id === companyId);
+  const period = record&&!projected ? state.periods.find((entry) => entry.id === record.period_id) : monthPeriods.find((entry) => entry.company_id === companyId);
   const documents = state.documents.filter((entry) => entry.period_id === period?.id);
   const selectedDocument = documents.find((entry) => entry.id === record?.document_id);
-  const editable = canEdit && !record?.id.startsWith("book:") && selected?.status === "active" && (!record || period?.status === "open");
+  const editable = canEdit && !record?.id.startsWith("book:") && selected?.status === "active" && (!record || projected || period?.status === "open");
 
-  return <Modal title={record ? editable ? "Editar vencimiento" : record.title : "Nuevo vencimiento"}
+  return <Modal title={record ? editable ? "Editar vencimiento" : record.title : habitual?"Configurar vencimiento habitual":"Nuevo vencimiento"}
     description={`${monthLabel(month, locale)}${selected ? ` · ${companyName(selected)}` : ""}`} close={close}>
     {editable ? <ActionForm close={close} label={record ? "Guardar cambios" : "Crear vencimiento"} submit={async (data) => {
       const savedPeriod = period ?? await mutate({ type: "period.ensure", companyId, month }, "Período iniciado.");
       if (!savedPeriod.id) throw new Error("No se pudo iniciar el período de la empresa.");
       await mutate({
-        type: "obligation.save", periodId: savedPeriod.id, id: record?.id,
+        type: "obligation.save", periodId: savedPeriod.id, id: projected?undefined:record?.id,
+        recurrence:repeat||previous.rule?repeat&&exception&&previous.rule?{...previous.rule,from:month}:ruleFromDate(previous.rule?.seriesId??crypto.randomUUID(),month,fieldValue(data,'dueOn'),repeat,previous.rule,record?.due_on):undefined,
         title: fieldValue(data, "title"), dueOn: fieldValue(data, "dueOn"), amount: optionalValue(data, "amount")?.replace(",", ".") ?? null,
         status: fieldValue(data, "status") as Obligation["status"], filedOn: optionalValue(data, "filedOn"), paidOn: optionalValue(data, "paidOn"),
         documentId: optionalValue(data, "documentId"), notes: fieldValue(data, "notes"),
@@ -212,6 +224,9 @@ function ObligationModal({ record, close }: { record?: Obligation; close: () => 
       </Select></Field>}
       <Field label="Impuesto u obligación" span><Input name="title" defaultValue={record?.title} minLength={2} maxLength={160} required /></Field>
       <Field label="Vencimiento"><Input type="date" name="dueOn" defaultValue={record?.due_on ?? ""} required /></Field>
+      <label className="check-field field-wide"><input type="checkbox" checked={repeat} onChange={e=>setRepeat(e.target.checked)}/>Repetir todos los meses, conservando el día</label>
+      {previous.rule&&repeat&&<label className="check-field field-wide"><input type="checkbox" checked={exception} onChange={e=>setException(e.target.checked)}/>Cambiar solo la fecha de este mes (por feriado o prórroga)</label>}
+      <p className="muted text-sm field-wide">La fecha habitual se conserva entre meses. Importe, presentación y pago corresponden únicamente a este período.</p>
       <Field label={`Importe (${selected.currency})`}><Input name="amount" inputMode="decimal" pattern="[0-9]{1,14}([.,][0-9]{1,2})?" defaultValue={record?.amount?.replace(".", ",")} /></Field>
       <Field label="Estado" span><Select name="status" defaultValue={record?.status ?? "pending"}>
         {Object.entries(obligations).map(([id, info]) => <option key={id} value={id}>{info.label}</option>)}
@@ -221,7 +236,7 @@ function ObligationModal({ record, close }: { record?: Obligation; close: () => 
       {documents.length > 0 && <Field label="Documento de respaldo" span><Select key={period?.id} name="documentId" defaultValue={record?.document_id ?? ""}>
         <option value="">Sin documento vinculado</option>{documents.map((entry) => <option key={entry.id} value={entry.id}>{entry.name}</option>)}
       </Select></Field>}
-      <Field label="Observaciones" span><textarea className="control" name="notes" defaultValue={record?.notes} maxLength={4000} /></Field>
+      <Field label="Observaciones" span><textarea className="control" name="notes" defaultValue={previous.text} maxLength={4000} /></Field>
     </ActionForm> : record && <>
       <dl className="grid gap-4 sm:grid-cols-2">
         <SettingValue label="Estado" value={obligations[record.status].label} />
@@ -229,7 +244,7 @@ function ObligationModal({ record, close }: { record?: Obligation; close: () => 
         <SettingValue label="Importe" value={record.amount === null ? "Pendiente de determinar" : money(record.amount, selected?.currency ?? state.organization?.currency, locale)} />
         <SettingValue label="Presentación" value={record.filed_on ? dayLabel(record.filed_on, undefined, locale) : "—"} />
         <SettingValue label="Pago" value={record.paid_on ? dayLabel(record.paid_on, undefined, locale) : "—"} />
-        {record.notes && <SettingValue label="Observaciones" value={record.notes} />}
+        {previous.text && <SettingValue label="Observaciones" value={previous.text} />}
       </dl>
       {selectedDocument && <Link className="text-button mt-4" href={href("documentacion", { companyId: record.company_id })}>Ver {selectedDocument.name} en Documentación</Link>}
     </>}

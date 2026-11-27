@@ -1,3 +1,4 @@
+import { fiscalRuleSchema } from "./fiscal-recurrence";
 import { z } from "zod";
 import { bookSchema } from "@/lib/accounting/model";
 import { accountKinds, documentCategories, paymentStatuses, reviewStatuses, taskStatuses, xubioStatuses } from "./model";
@@ -64,7 +65,7 @@ export const commandSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("organization.create"), name: text(120).min(2) }),
   z.object({ type: z.literal("organization.member"), organizationId: uuid, userId: uuid, role: z.enum(["owner", "editor", "viewer"]).nullable() }),
   z.object({ type: z.literal("organization.settings"), id: uuid, values: organizationSettingsSchema }),
-  z.object({ type: z.literal("obligation.save"), periodId: uuid, id: uuid.optional(), title: text(160).min(2), dueOn: z.iso.date(), amount: monetary.nullable(), status: z.enum(["pending", "filed", "paid", "not_applicable"]), filedOn: z.iso.date().nullable(), paidOn: z.iso.date().nullable(), documentId: uuid.nullable(), notes: text(4000) }),
+  z.object({ type: z.literal("obligation.save"), recurrence: fiscalRuleSchema.optional(), periodId: uuid, id: uuid.optional(), title: text(160).min(2), dueOn: z.iso.date(), amount: monetary.nullable(), status: z.enum(["pending", "filed", "paid", "not_applicable"]), filedOn: z.iso.date().nullable(), paidOn: z.iso.date().nullable(), documentId: uuid.nullable(), notes: text(4000) }),
 ]);
 export type Command = z.input<typeof commandSchema>;
 export type ParsedCommand = z.output<typeof commandSchema>;
@@ -74,3 +75,5 @@ export const importOptionsSchema = documentContextSchema.omit({ category: true }
   decimal: z.enum(["auto", "comma", "point"]),
   mapping: z.record(z.string().max(50), z.number().int().min(0).max(399)),
 });
+
+export function absenceDirection(title:string){return title==='Recepción de comprobantes recibidos'?'purchase':title==='Recepción de comprobantes emitidos'?'sale':null;}

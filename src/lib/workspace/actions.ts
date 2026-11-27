@@ -1,4 +1,6 @@
 "use server";
+import {absenceDirection} from "./validation";
+import {withFiscalRule} from "./fiscal-recurrence";
 
 import { createHash, randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
@@ -125,6 +127,12 @@ async function performWorkspaceMutation(input: unknown): Promise<Result<{ id?: s
       }
       case "task.save": {
         const period = await periodScope(supabase, command.periodId);
+        const direction=absenceDirection(command.title);
+        if(command.status==='not_applicable'&&direction){
+          const existing=await supabase.from('vouchers').select('id').eq('period_id',period.id).eq('company_id',period.company_id).eq('direction',direction).limit(1).maybeSingle();
+          if(existing.error)checked(existing);
+          if(existing.data)throw new WorkspaceError('Ya hay comprobantes de ese tipo en el período. No se puede declarar que no hubo actividad.');
+        }
         const values = { title: command.title, status: command.status, notes: command.notes, document_id: command.documentId };
         if (command.id) return { ok: true, data: await saveRecord(supabase, "close_tasks", command.id, values, ["period_id", period.id]) };
         const result = await supabase.from("close_tasks").select("position").eq("period_id", period.id).order("position", { ascending: false }).limit(1);
@@ -160,7 +168,7 @@ async function performWorkspaceMutation(input: unknown): Promise<Result<{ id?: s
         return { ok: true, data: await saveRecord(supabase, "organizations", command.id, command.values) };
       case "obligation.save": {
         const period = await periodScope(supabase, command.periodId);
-        const values = { title: command.title, due_on: command.dueOn, amount: command.amount, status: command.status, filed_on: command.filedOn, paid_on: command.paidOn, document_id: command.documentId, notes: command.notes };
+        const values = { title: command.title, due_on: command.dueOn, amount: command.amount, status: command.status, filed_on: command.filedOn, paid_on: command.paidOn, document_id: command.documentId, notes: withFiscalRule(command.notes,command.recurrence) };
         return { ok: true, data: await saveRecord(supabase, "tax_obligations", command.id,
           command.id ? values : { ...values, organization_id: period.organization_id, company_id: period.company_id, period_id: period.id }, ["period_id", period.id]) };
       }

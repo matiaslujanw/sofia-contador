@@ -1,19 +1,19 @@
 import {beforeEach,expect,test,vi} from 'vitest';
 import {confirmWorkspaceImport,mutateWorkspace,uploadWorkspaceDocument,listWorkspaceDocuments} from './actions';
 import {readSource,suggestMapping} from '@/lib/imports';
-const mocks=vi.hoisted(()=>({access:vi.fn(),invalidate:vi.fn(),upload:vi.fn(),remove:vi.fn(),rpc:vi.fn(),fail:false,existingPlan:false,filters:[] as {table:string;column:string;value:unknown}[]}));
+const mocks=vi.hoisted(()=>({access:vi.fn(),invalidate:vi.fn(),upload:vi.fn(),remove:vi.fn(),rpc:vi.fn(),fail:false,existingPlan:false,existingVouchers:false,filters:[] as {table:string;column:string;value:unknown}[]}));
 vi.mock('next/cache',()=>({revalidatePath:mocks.invalidate}));
 vi.mock('@/lib/supabase/access',()=>({getWorkspaceAccess:mocks.access}));
 vi.mock('./queries',()=>({loadWorkspace:vi.fn()}));
 const companyId='10000000-0000-4000-8000-000000000010',periodId='10000000-0000-4000-8000-000000000100',org='10000000-0000-4000-8000-000000000001';
 beforeEach(()=>{
- vi.clearAllMocks();mocks.fail=false;mocks.existingPlan=false;mocks.filters=[];
+ vi.clearAllMocks();mocks.fail=false;mocks.existingPlan=false;mocks.existingVouchers=false;mocks.filters=[];
  mocks.upload.mockResolvedValue({error:null});mocks.remove.mockResolvedValue({error:null});
  mocks.rpc.mockResolvedValue({data:{row_count:1,duplicate_count:0,reused:false},error:null});
  mocks.access.mockResolvedValue({mode:'auth',userId:'user',supabase:{rpc:mocks.rpc,storage:{from:()=>({upload:mocks.upload,remove:mocks.remove})},from:(table:string)=>{
   const query={select:()=>query,eq:(column:string,value:unknown)=>{mocks.filters.push({table,column,value});return query;},limit:()=>query,insert:()=>query,update:()=>query,
    single:async()=>({data:table==='periods'?{id:periodId,company_id:companyId,organization_id:org,status:'open',month:'2026-11-01'}:{id:companyId},error:mocks.fail?{message:'synthetic failure'}:null}),
-   maybeSingle:async()=>({data:mocks.existingPlan&&table==='imports'?{row_count:1,duplicate_count:0}:null,error:null})};return query;
+   maybeSingle:async()=>({data:mocks.existingVouchers&&table==='vouchers'?{id:'voucher'}:mocks.existingPlan&&table==='imports'?{row_count:1,duplicate_count:0}:null,error:null})};return query;
  }}});
 });
 function documentForm(){const form=new FormData();form.set('file',new File(['%PDF-1.4\n%%EOF'],'synthetic.pdf',{type:'application/pdf'}));form.set('context',JSON.stringify({companyId,periodId,category:'Extractos bancarios'}));return form;}
@@ -51,4 +51,14 @@ test('la consulta fresca de respaldos rechaza una empresa distinta de la del per
  const result=await listWorkspaceDocuments('10000000-0000-4000-8000-000000000099',periodId);
  expect(result).toMatchObject({ok:false,message:'Empresa y período incompatibles.'});
  expect(mocks.filters.some(f=>f.table==='documents')).toBe(false);
+});
+
+
+test('la declaración sin compras consulta comprobantes del período antes de guardarse',async()=>{
+ const command={type:'task.save' as const,periodId,id:'10000000-0000-4000-8000-000000001001',title:'Recepción de comprobantes recibidos',status:'not_applicable' as const,notes:'Sin compras declarado',documentId:null};
+ expect((await mutateWorkspace(command)).ok).toBe(true);
+ expect(mocks.filters).toContainEqual({table:'vouchers',column:'period_id',value:periodId});
+ expect(mocks.filters).toContainEqual({table:'vouchers',column:'company_id',value:companyId});
+ expect(mocks.filters).toContainEqual({table:'vouchers',column:'direction',value:'purchase'});
+ mocks.existingVouchers=true;expect((await mutateWorkspace(command)).ok).toBe(false);
 });

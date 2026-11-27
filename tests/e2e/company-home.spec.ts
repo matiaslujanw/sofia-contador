@@ -5,7 +5,7 @@ test('el inicio muestra empresas y cada empresa abre sus herramientas con el alc
  await page.goto('/inicio');
  const main=page.getByRole('main');
  await expect(main.getByRole('heading',{level:1,name:'Contabilidad - Sofía Luján Contadora Pública',exact:true})).toBeVisible();
- await expect(main.getByRole('region',{name:'Cómo trabajar cada mes'})).toBeVisible();
+ await expect(main.getByRole('region',{name:'Cómo trabajar cada mes'})).toHaveCount(0);
  await expect(main.getByRole('heading',{name:'Empresas',exact:true})).toBeVisible();
  await expect(main.locator('.company-picker-card')).toHaveCount(3);
  await expect(page.getByRole('combobox',{name:'Período',exact:true})).toHaveCount(0);

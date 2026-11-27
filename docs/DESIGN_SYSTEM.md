@@ -40,3 +40,7 @@ Los tokens de `src/app/globals.css` definen además superficies suaves, focos y 
 En escritorio se mantiene el menú lateral. Por debajo de 940 px se abre en un panel a demanda, con el selector en la barra superior. Por debajo de 660 px se apilan los paneles y campos y se reduce a dos columnas la grilla de indicadores. El ingreso pasa a una columna por debajo de 47 rem.
 
 Las rutas privadas incluyen un enlace directo al contenido para teclado. Los controles tienen etiquetas y foco visible. Los encabezados definen la jerarquía de cada pantalla, y los estados que requieren atención usan texto además del color. La interfaz respeta la preferencia de movimiento reducido en los indicadores animados.
+
+## Ajuste rosa pastel y lila
+
+Se combinan rosa `#F5B8D0` y lila `#D8C7F3` en acciones y navegación. Las tarjetas del inicio usan fondos pastel alternados (`#F7DCE8`/`#E8DDF8`) y texto oscuro para mantener legibilidad; iconos y controles secundarios incorporan lila. Se retira el cuadro explicativo «Tu trabajo contable, mes a mes» del inicio: permanecen identidad, empresas y alta. Los estados de error, atención y confirmación mantienen sus colores semánticos y sus etiquetas.

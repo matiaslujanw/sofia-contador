@@ -7,6 +7,7 @@ import { demoTourVoucherId } from "@/lib/workspace/demo";
 import { documentExtensions } from "@/lib/workspace/documents";
 import { companyName, cuitLabel, dayLabel, fileSize, money, monthLabel } from "@/lib/workspace/format";
 import { accountKinds, documentCategories, paymentStatuses, reviewStatuses, xubioStatuses, type Account, type AccountValues, type Voucher, type VoucherClassification } from "@/lib/workspace/model";
+import { NoActivityControl } from "./no-activity-control";
 import { ManualVoucher } from "./manual-voucher";
 import { PreparationImports } from "./preparation-imports";
 import { ImportPanel } from "./import-panel";
@@ -103,6 +104,7 @@ export function VouchersPage({ guide = false, closeGuide, initialDirection = "pu
         <button type="button" className="segment" aria-pressed={direction === "purchase"} onClick={() => setDirection("purchase")}>Compras <span>{all.filter((entry) => entry.direction === "purchase").length}</span></button>
         <button type="button" className="segment" aria-pressed={direction === "sale"} onClick={() => setDirection("sale")}>Ventas <span>{all.filter((entry) => entry.direction === "sale").length}</span></button>
       </div>
+      <NoActivityControl key={direction} direction={direction}/>
       <div className="table-toolbar"><Search label="Buscar comprobante o CUIT" value={query} onChange={setQuery} />
         <Select aria-label="Estado de revisión" value={status} onChange={(event) => setStatus(event.target.value)}><option value="">Todas las revisiones</option>
           {Object.entries(reviewStatuses).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</Select>

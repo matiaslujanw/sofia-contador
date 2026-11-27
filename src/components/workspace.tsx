@@ -7,6 +7,7 @@ import {
   LayoutList, ListTree, LogOut, Menu, ReceiptText, Settings, ShieldCheck, X, ChartNoAxesCombined,
 } from "lucide-react";
 import Image from "next/image";
+import {brand} from "@/lib/brand";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useSyncExternalStore, type MouseEventHandler } from "react";
@@ -170,9 +171,9 @@ export function Workspace({ initial, section, mode, email, month, today, company
 
   function sidebar(close?: () => void) {
     return <aside className="sidebar">
-      <Link className="brand" href={href("inicio", { companyId: undefined })} onClick={close} aria-label="Sofía, inicio">
+      <Link className="brand" href={href("inicio", { companyId: undefined })} onClick={close} aria-label="Contabilidad, inicio">
         <Image src="/sofia-mark.svg" alt="" width={37} height={37} unoptimized />
-        <span className="brand-name"><strong>SOFÍA</strong><span>Gestión Contable</span></span>
+        <span className="brand-name"><strong>{brand.shortName}</strong><span>{brand.professional}</span><span>{brand.qualification}</span></span>
       </Link>
       <nav aria-label="Navegación principal" className="nav-groups">
         {company && <Link className="text-button" href={href("inicio", { companyId: undefined })} onClick={close}>← Todas las empresas</Link>}
@@ -242,7 +243,7 @@ export function Workspace({ initial, section, mode, email, month, today, company
           </Dialog.Root>
           <div className="workspace-location">
             <span className="route-name">{sections[section]}</span>
-            <span className="mobile-brand" aria-hidden="true">Sofía</span>
+            <span className="mobile-brand" aria-hidden="true">Contabilidad</span>
             {mode === "demo" && <span className="demo-indicator" title="Datos ficticios. Usá archivos de prueba.">
               <FlaskConical size={14} aria-hidden="true" /> <span>Demo</span><span className="sr-only"> con datos ficticios</span>
             </span>}

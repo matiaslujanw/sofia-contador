@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import "@fontsource-variable/inter";
 import "./globals.css";
+import {brand} from "@/lib/brand";
 
 export const metadata: Metadata = {
-  title: { default: "Sofía | Gestión Contable", template: "%s | Sofía" },
+  title: { default: brand.title, template: "%s | Contabilidad - Sofía Luján" },
   description: "Espacio privado para organizar y controlar el cierre contable mensual.",
-  applicationName: "Sofía",
+  applicationName: "Contabilidad - Sofía Luján",
   robots: { index: false, follow: false },
 };
 

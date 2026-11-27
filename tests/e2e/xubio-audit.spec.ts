@@ -3,6 +3,7 @@ import {utils,write,read} from 'xlsx';
 import {readFile} from 'node:fs/promises';
 import {createDemoWorkspace} from '../../src/lib/workspace/demo';
 import {todayIn,shiftMonth} from '../../src/lib/workspace/format';
+import {syntheticComafiPdf} from '../fixtures/comafi';
 import {pair} from '../../src/lib/accounting/engine';
 import type {Account} from '../../src/lib/workspace/model';
 const companyId='10000000-0000-4000-8000-000000000010',month=todayIn().slice(0,7);
@@ -32,6 +33,12 @@ test('guarda reportes mensuales, cruza, exporta XLS y conserva el lote sin reenv
  // Seed once; keep subsequent reloads from replacing persisted test data.
  await page.goto(`/xubio?empresa=${companyId}&mes=${month}`);
  await expect(page.getByText('Respaldos del mes consultados.',{exact:false})).toBeVisible();
+ const diagnosis=page.getByRole('region',{name:'Diagnóstico mensual'});
+ await expect(diagnosis.getByRole('heading',{name:'Qué falta para cerrar el mes'})).toBeVisible();
+ await expect(diagnosis).toContainText('El mes tiene tareas pendientes');
+ const [plan]=await Promise.all([page.waitForEvent('download'),diagnosis.getByRole('button',{name:'Descargar plan de trabajo'}).click()]);
+ expect(plan.suggestedFilename()).toBe(`xubio-auditoria-${month}-plan-de-trabajo.csv`);
+ expect(await readFile(await plan.path(),'utf8')).toContain('"diagnostico";"accion"');
  for(const [label,file]of Object.entries(sources)){
   const input=page.getByLabel(label,{exact:true});await expect(input).toBeEnabled();await input.setInputFiles(file);
   await page.getByRole('button',{name:'Guardar reporte mensual',exact:true}).click();
@@ -44,7 +51,8 @@ test('guarda reportes mensuales, cruza, exporta XLS y conserva el lote sin reenv
  const selection=page.getByRole('checkbox',{name:`Confirmar faltante book:${expected}`,exact:true});await expect(selection).toBeEnabled();await selection.check();
  await page.getByLabel('Circuito contable exacto en Xubio').fill('Default');
  await page.getByRole('button',{name:'Guardar revisión y cuentas',exact:true}).click();
- await expect(page.getByText('Revisión de auditoría guardada para continuar después.',{exact:true})).toBeVisible();
+ await expect(page.getByText('Revisión, cuentas y plan de trabajo mensual guardados para continuar después.',{exact:true})).toBeVisible();
+ expect(await page.evaluate(name=>{const s=JSON.parse(localStorage.getItem('sofia-contable-demo-v1')!);return s.documents.some((d:{name:string})=>d.name===name);},`xubio-auditoria-${month}-plan-de-trabajo.csv`)).toBe(true);
  await page.getByRole('checkbox',{name:/Revisé cada faltante seleccionado/}).check();
  const [download]=await Promise.all([page.waitForEvent('download'),page.getByRole('button',{name:'Generar XLS de faltantes revisados',exact:true}).click()]);
  expect(download.suggestedFilename()).toMatch(/^xubio-asientos-.*\.xls$/);
@@ -68,4 +76,35 @@ test('un listado de asientos manuales no habilita exportar faltantes',async({pag
  await expect(page.getByText('Este archivo es un listado de asientos sin líneas contables.',{exact:false})).toBeVisible();
  await page.getByRole('checkbox',{name:/Verifiqué la empresa, la moneda ARS/}).check();
  await expect(page.getByRole('button',{name:'Generar XLS de faltantes revisados',exact:true})).toBeDisabled();
+});
+
+
+test('muestra diferencias bancarias y separa dólares en la auditoría del iPad',async({page})=>{
+ await page.setViewportSize({width:820,height:1180});
+ await page.goto(`/preparacion?empresa=${companyId}&mes=${month}&tipo=banco`);
+ await page.getByLabel('Resumen Comafi en PDF').setInputFiles(syntheticComafiPdf(month));
+ await page.getByRole('button',{name:'Analizar PDF Comafi',exact:true}).click();
+ await expect(page.getByRole('cell',{name:'12 movimientos · saldos verificados',exact:true})).toBeVisible();
+ await page.getByRole('checkbox',{name:'Revisé que el resumen corresponde a esta empresa, las clasificaciones y los importes'}).check();
+ await page.getByRole('button',{name:'Guardar PDF y papel bancario',exact:true}).click();
+ await expect(page.getByText('PDF original y papel bancario guardados en Documentación de esta empresa y mes.')).toBeVisible();
+ await page.goto(`/xubio?empresa=${companyId}&mes=${month}`);
+ await expect(page.getByText('Respaldos del mes consultados.',{exact:false})).toBeVisible();
+ for(const [label,file]of Object.entries(sources)){
+  await page.getByLabel(label,{exact:true}).setInputFiles(file);
+  await page.getByRole('button',{name:'Guardar reporte mensual',exact:true}).click();
+  await expect(page.getByText('Reporte guardado. Podés salir y recuperarlo en esta empresa y mes.',{exact:true})).toBeVisible();
+ }
+ await page.getByText('Vincular cuentas del plan para preparar propuestas',{exact:true}).click();
+ await page.getByLabel(/Cuenta bancaria .*01-1.*ARS/).selectOption(bank);
+ await page.getByRole('checkbox',{name:/Verifiqué la empresa, la moneda ARS/}).check();
+ const diagnosis=page.getByRole('region',{name:'Diagnóstico mensual'}),balances=diagnosis.getByRole('table',{name:'Comparación de saldos bancarios'});
+ await expect(diagnosis).toContainText('Hay diferencias por resolver');
+ await expect(balances).toContainText('1.260,00');await expect(balances).toContainText('990,00');await expect(balances).toContainText('270,00');
+ await expect(balances).toContainText('USD');await expect(balances).toContainText('revisión separada de ARS');
+ await diagnosis.getByText(/Ver todos los controles del mes/).click();
+ await expect(diagnosis.getByRole('table',{name:'Plan de trabajo mensual'})).toContainText('Conciliación bancaria');
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ await diagnosis.scrollIntoViewIfNeeded();
+ await page.screenshot({path:'/tmp/sofia-auditoria-ipad.png'});
 });

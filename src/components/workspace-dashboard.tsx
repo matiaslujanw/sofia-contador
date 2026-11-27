@@ -6,6 +6,7 @@ import {
   Plus, ReceiptText, ShieldAlert, Users, Wallet, type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
+import {brand} from "@/lib/brand";
 import { companyName, cuitLabel, initials, money, monthLabel } from "@/lib/workspace/format";
 import { companyInsights } from "@/lib/workspace/insights";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -25,8 +26,10 @@ export function StudyDashboard() {
   const { state, canEdit, href } = useWorkspace();
   const companies = state.companies.filter(company => company.status === "active");
   return <>
-    <Heading title="Empresas" description="Elegí una empresa para trabajar."
+    <Heading title={brand.title} description="Gestión contable de empresas. Organizá las cargas de cada mes, revisá qué falta y prepará los archivos para Xubio."
       actions={canEdit && <Link className="button button-primary" href={href("empresas", {}, { tipo: "nueva" })}><Plus size={17} aria-hidden="true" /> Nueva empresa</Link>} />
+    <section className="panel" aria-label="Cómo trabajar cada mes"><SectionHeading title="Tu trabajo contable, mes a mes"/><ol className="grid gap-3"><li><strong>1. Elegí una empresa y el mes.</strong> El plan de cuentas es permanente; se prepara una sola vez.</li><li><strong>2. Cargá la documentación.</strong> Compras, ventas, bancos y los reportes mensuales de Xubio.</li><li><strong>3. Revisá la auditoría.</strong> Consultá diferencias, tareas pendientes y asientos por completar antes de cerrar.</li></ol></section>
+    <SectionHeading title="Empresas" subtitle="Elegí una empresa para continuar con sus cargas y su auditoría mensual."/>
     {companies.length ? <div className="company-picker" aria-label="Empresas del estudio">
       {companies.map(company => <Link key={company.id} className="panel company-picker-card" href={href("inicio", { companyId: company.id })}>
         <span className="avatar company-hero-avatar" aria-hidden="true">{initials(companyName(company))}</span>
@@ -52,7 +55,7 @@ const companyTools = [
   { title: "Documentación e importaciones", description: "Guardar respaldos e importar planillas de la empresa.", section: "documentacion", icon: Files },
   { title: "Plan de cuentas", description: "Consultar, cargar o importar las cuentas contables.", section: "cuentas", icon: ListTree },
   { title: "Checklist y cierre mensual", description: "Controlar lo pendiente, completar tareas y cerrar el mes.", section: "cierre", icon: ClipboardCheck },
-  { title: "Auditoría mensual de Xubio", description: "Cargar reportes, comparar registraciones y exportar faltantes revisados.", section: "xubio", icon: ShieldAlert },
+  { title: "Auditoría mensual de Xubio", description: "Ver diferencias, tareas pendientes y posibles asientos faltantes; generar lotes revisados.", section: "xubio", icon: ShieldAlert },
   { title: "Auditoría y controles", description: "Revisar alertas y el historial de cambios de esta empresa.", section: "auditoria", icon: ShieldAlert },
 ] as const;
 

@@ -64,3 +64,11 @@ Plan de cuentas es configuración permanente de la empresa: carga inicial, alta 
 ## Cruce con Xubio
 
 Después de preparar comprobantes, banco y asientos, ingresar a Auditoría de Xubio. Guardar los tres reportes del mes, verificar empresa/filtros/moneda, revisar cuentas y hallazgos, guardar revisión y generar exclusivamente faltantes elegibles confirmados. Coincidencias y dudas se excluyen. El XLS/manifiesto queda archivado; tras importarlo, cargar Diario actualizado para verificar. No representa una auditoría de documentación ausente ni confirma carga externa. Ver [alcance y límites](XUBIO_AUDIT.md).
+
+## Plan de trabajo de la auditoría
+
+Desde cada empresa y mes, abrir Auditoría de Xubio y cargar/guardar Diario, Mayor y Sumas y Saldos. «Qué falta para cerrar el mes» prioriza documentación faltante, diferencias y revisiones pendientes, con acceso al lugar donde resolverlas. Compras/ventas sin actividad requieren declaración explícita del mes; el plan de cuentas continúa siendo permanente de la empresa.
+
+Revisar saldos iniciales/finales bancarios, operaciones esperadas, deudas, impuestos, sueldos, cuentas corrientes, DDJJ y amortizaciones. Los controles del checklist son declaraciones revisables y no reemplazan documentación. Seleccionar solo faltantes identificados: la proyección bancaria muestra su efecto sin dar por registrados los asientos. Descargar/guardar el plan, generar el lote revisado, importar en Xubio y cargar reportes actualizados para comprobarlo. No ajustar automáticamente para forzar igualdad ni cancelar deudas que aún no se pagaron.
+
+El inicio general identifica el estudio como «Contabilidad - Sofía Luján Contadora Pública», mantiene las empresas como entrada a cada espacio y explica el recorrido de carga y revisión mensual.

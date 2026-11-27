@@ -54,7 +54,7 @@ const html = `<!doctype html>
   <meta name="color-scheme" content="dark">
   <meta name="robots" content="noindex, nofollow">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; object-src 'none'; base-uri 'none'; form-action 'none'">
-  <title>Sofía | Recorrido de demostración</title>
+  <title>Contabilidad - Sofía Luján Contadora Pública | Demostración</title>
   <style>${css}</style>
 </head>
 <body>

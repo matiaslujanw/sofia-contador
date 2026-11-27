@@ -11,7 +11,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       <div className={styles.brandPanel}>
         <div className={styles.brand}>
           <Image className={styles.brandMark} src="/sofia-mark.svg" alt="" width={44} height={44} unoptimized />
-          <div><strong>SOFÍA</strong><span>Gestión Contable</span></div>
+          <div><strong>Contabilidad</strong><span>Sofía Luján · Contadora Pública</span></div>
         </div>
         <p className={styles.tagline}>Organizá.<br />Controlá.<br />Simplificá.</p>
         <p className={styles.privateLabel}><LockKeyhole size={15} aria-hidden="true" /> Espacio privado de tu estudio</p>

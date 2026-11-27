@@ -4,6 +4,8 @@ const nexo='10000000-0000-4000-8000-000000000010',lumen='10000000-0000-4000-8000
 test('el inicio muestra empresas y cada empresa abre sus herramientas con el alcance correcto',async({page})=>{
  await page.goto('/inicio');
  const main=page.getByRole('main');
+ await expect(main.getByRole('heading',{level:1,name:'Contabilidad - Sofía Luján Contadora Pública',exact:true})).toBeVisible();
+ await expect(main.getByRole('region',{name:'Cómo trabajar cada mes'})).toBeVisible();
  await expect(main.getByRole('heading',{name:'Empresas',exact:true})).toBeVisible();
  await expect(main.locator('.company-picker-card')).toHaveCount(3);
  await expect(page.getByRole('combobox',{name:'Período',exact:true})).toHaveCount(0);

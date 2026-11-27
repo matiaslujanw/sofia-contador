@@ -97,7 +97,7 @@ export function XubioAuditPage(){
  {accountSelect('Proveedores · cuenta de control',mapping.suppliers,value=>changeMapping({...mapping,suppliers:value}),'liability')}{accountSelect('Clientes · cuenta de control',mapping.customers,value=>changeMapping({...mapping,customers:value}),'asset')}
  </div></details>
  <label className="check-field mt-3"><input type="checkbox" checked={coverage} disabled={busy||!editable} onChange={e=>{setCoverage(e.target.checked);invalidate();}}/>Verifiqué la empresa, la moneda ARS, el Diario completo del mes con todos los circuitos y sin agrupación, y el rango mensual de Sumas y Saldos</label>
- <p className="muted text-sm mt-3">Las percepciones, IVA no computable, impuesto a los débitos/créditos y sellos requieren criterio fiscal. La asignación de una cuenta no determina por sí sola su cómputo impositivo. Los pagos y transferencias no se presumen compras o ventas.</p>
+ <p className="muted text-sm mt-3">Si un cargo bancario tiene factura en ARCA, revisá si el débito cancela al proveedor en lugar de generar nuevamente gasto e IVA. Las percepciones, IVA no computable, impuesto a los débitos/créditos y sellos requieren criterio fiscal. La asignación de una cuenta no determina por sí sola su cómputo impositivo. Los pagos y transferencias no se presumen compras o ventas.</p>
  </section>
  <section className="panel"><SectionHeading title="3. Hallazgos y faltantes revisables" action={<Badge tone={audit.ready?'positive':'warning'}>{audit.ready?'Cruce habilitado':'Alcance incompleto'}</Badge>}/>
  {audit.issues.length>0&&<ul className="notice notice-warning mb-3">{audit.issues.map((issue,i)=><li key={i}>{issue}</li>)}</ul>}
@@ -108,7 +108,7 @@ export function XubioAuditPage(){
  </section>
  <section className="panel"><SectionHeading title="4. Archivo para importar a Xubio" subtitle="Solo los posibles faltantes completos y confirmados. Coincidencias, dudas y lotes anteriores quedan excluidos."/>
  <Field label="Circuito contable exacto en Xubio"><Input value={circuit} disabled={busy||!editable} onChange={e=>{setCircuit(e.target.value);setApproved(false);}} maxLength={100}/></Field>
- <label className="check-field mt-3"><input type="checkbox" checked={approved} disabled={busy||!editable} onChange={e=>setApproved(e.target.checked)}/>Revisé cada faltante seleccionado, cuentas y contrapartes, posibles agrupaciones y lotes previos; nadie lo registró en Xubio desde esta consulta</label>
+ <label className="check-field mt-3"><input type="checkbox" checked={approved} disabled={busy||!editable} onChange={e=>setApproved(e.target.checked)}/>Revisé cada faltante seleccionado, cuentas, contrapartes, facturas bancarias, posibles agrupaciones y lotes previos; nadie lo registró en Xubio desde esta consulta</label>
  <button className="button button-primary mt-3" type="button" disabled={busy||!editable||!historyReady||!audit.ready||!eligibleSelected.size||!approved||!circuit.trim()||Object.values(sources).some(s=>!s.saved)} onClick={async()=>{
   setBusy(true);setError('');try{
    const docs=await currentDocuments();const history=await auditExportHistory(docs,readDocument,company,month,period.id);

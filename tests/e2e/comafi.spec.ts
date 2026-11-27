@@ -72,7 +72,7 @@ test('revisa movimientos, corrige clasificación y conserva PDF y papel en la em
  await page.reload();await expect(page.getByRole('main').getByText(file.name,{exact:true})).toBeVisible();
  await page.getByRole('link',{name:'Volver a la empresa',exact:true}).click();
  await page.getByRole('link',{name:'Comenzar preparación del mes',exact:true}).click();
- await page.getByRole('link',{name:'4. Resumen bancario',exact:true}).click();
+ await page.getByRole('link',{name:'3. Resumen bancario',exact:true}).click();
  await page.getByRole('button',{name:`Abrir análisis ${file.name}`,exact:true}).click();
  await expect(page.getByText('Trabajo recuperado del PDF y del papel bancario guardados.',{exact:true})).toBeVisible();
  await page.getByText('Revisar 12 movimientos y su clasificación',{exact:true}).click();

@@ -56,8 +56,12 @@ const companyTools = [
 ] as const;
 
 export function CompanyHome() {
-  const { company, month, locale, href } = useWorkspace();
+  const { company, month, locale, href, state, period } = useWorkspace();
   if (!company) return null;
+  const accounts=state.accounts.filter(a=>a.company_id===company.id);
+  const vouchers=state.vouchers.filter(v=>v.company_id===company.id&&v.period_id===period?.id);
+  const docs=state.documents.filter(d=>d.company_id===company.id&&d.period_id===period?.id);
+  const noSales=state.tasks.some(t=>t.period_id===period?.id&&t.title==='Recepción de comprobantes emitidos'&&t.status==='not_applicable')&&!vouchers.some(v=>v.direction==='sale');
   return <>
     <div><Link className="text-button" href={href("inicio", { companyId: undefined })}><ArrowLeft size={16} aria-hidden="true" /> Todas las empresas</Link></div>
     <section className="company-overview">
@@ -65,9 +69,11 @@ export function CompanyHome() {
       <Heading title={companyName(company)} description={`CUIT ${cuitLabel(company.cuit)} · ${monthLabel(month, locale)}`}
         actions={<Link className="button button-secondary" href={href("cierre")}>Abrir cierre</Link>} />
     </section>
-    <section className="panel"><SectionHeading title="Preparar el mes, paso a paso" subtitle="Primero el plan de Xubio; después comprobantes de ARCA, resumen bancario y papel impositivo." action={<Link className="button button-primary" href={href("preparacion")}>Comenzar preparación del mes</Link>} /></section>
+    <section className="panel" aria-label="Configuración permanente"><SectionHeading title="Datos permanentes de la empresa" subtitle="Se mantienen entre meses y se modifican cuando hace falta."/><Link className="text-button" href={href('cuentas')}>Plan de cuentas · {accounts.length} cuentas guardadas</Link><p className="muted text-sm">{accounts.filter(a=>a.status==='active').length} activas · {accounts.filter(a=>a.status==='inactive').length} inactivas. No requiere una carga mensual.</p></section>
+    <section className="panel"><SectionHeading title="Preparar el mes, paso a paso" subtitle="Compras, ventas, resumen bancario y papel impositivo del mes seleccionado." action={<Link className="button button-primary" href={href("preparacion")}>Comenzar preparación del mes</Link>} />
+    <h3 className="mt-3">Revisar lo cargado · {monthLabel(month,locale)}</h3><ul className="mt-3"><li><Link className="text-button" href={href('preparacion',{}, {tipo:'compras'})}>Compras: {vouchers.filter(v=>v.direction==='purchase').length} comprobantes · {vouchers.filter(v=>v.direction==='purchase'&&v.review_status!=='approved').length} pendientes de revisión</Link></li><li><Link className="text-button" href={href('preparacion',{}, {tipo:'ventas'})}>Ventas: {noSales?'Sin ventas confirmado':`${vouchers.filter(v=>v.direction==='sale').length} comprobantes`}</Link></li><li><Link className="text-button" href={href('preparacion',{}, {tipo:'banco'})}>Banco: {docs.filter(d=>d.category==='Extractos bancarios').length} extractos · {docs.filter(d=>d.category==='Papeles de trabajo').length} papeles guardados</Link></li></ul><Link className="text-button mt-3" href={href('control')}>Ver controles del mes y pendientes</Link></section>
     <div className="company-tool-grid" aria-label={`Herramientas de ${companyName(company)}`}>
-      {companyTools.map(tool => <Link key={tool.title} className="panel company-tool-card"
+      {companyTools.filter(tool=>tool.section!=='cuentas').map(tool => <Link key={tool.title} className="panel company-tool-card"
         href={href(tool.section, {}, "tab" in tool ? { tipo: tool.tab } : undefined) + ("anchor" in tool ? `#${tool.anchor}` : "")}>
         <span className="section-icon" aria-hidden="true"><tool.icon size={21} /></span>
         <span><strong>{tool.title}</strong><small>{tool.description}</small></span>

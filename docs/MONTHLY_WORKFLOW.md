@@ -54,3 +54,8 @@ Se adaptó el lector a un plan de Xubio y a Mis Comprobantes Recibidos de ARCA. 
 ## Septiembre con actividad bancaria
 
 Se validó el PDF Comafi recibido de septiembre: 22 movimientos, tres cuentas y saldos coherentes. En Preparar mes → Banco, Analizar PDF muestra saldos, categorías y cada renglón con origen; permite corregir categorías y descargar el papel. Tras verificar empresa/mes, Guardar PDF y papel bancario archiva ambos respaldos. Las cuentas sin actividad se conservan con su moneda y saldos, sin crear pagos ficticios. Los impuestos a los débitos/créditos y sellos quedan separados de IVA, y las transferencias requieren identificar su contraparte. Esta etapa prepara documentación; la incorporación al libro, el cruce con comprobantes, el crédito fiscal computable y los asientos requieren revisión posterior y la activación del módulo operativo existente.
+
+
+## Separación del plan de cuentas (27/11/2026)
+
+Plan de cuentas es configuración permanente de la empresa: carga inicial, alta de cuentas, edición e inactivación cuando corresponde. No integra las etapas mensuales ni se exige repetirlo al cambiar de mes. Preparar mes arranca en Compras y enlaza al plan ya disponible. La portada separa Datos permanentes de Revisar lo cargado del mes, con cantidad de comprobantes, compras pendientes de aprobación, ausencia de ventas confirmada y respaldos. Estas cantidades ayudan a revisar; no certifican que la documentación esté completa o que una DDJJ sea correcta. Empezar una revisión no elimina registros ni borra VigIA; no se accedió a su información real durante esta entrega.

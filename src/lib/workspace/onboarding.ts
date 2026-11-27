@@ -22,7 +22,7 @@ export type OnboardingStep = {
 
 export const sectionGuide = {
   inicio: "Elegí una empresa y entrá en sus tareas del mes.",
-  preparacion: "Prepará el mes en orden: cuentas, compras, ventas, resumen bancario y papel impositivo.",
+  preparacion: "Prepará compras, ventas, resumen bancario y papel impositivo de cada mes. El plan de cuentas es una configuración permanente de la empresa.",
   empresas: "Creá y actualizá la ficha de cada cliente. Podés archivar empresas y conservar su historial.",
   cierre: "Abrí un mes para una empresa y actualizá las tareas del checklist a medida que trabajás.",
   contabilidad: "Registrá aperturas, cobros, pagos, obligaciones, extractos, activos y asientos. Consultá saldos y resultados por mes.",

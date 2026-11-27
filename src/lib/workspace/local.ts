@@ -264,7 +264,7 @@ export async function confirmLocalImport(initial: WorkspaceState, periodId: stri
   const buffer = await input.file.arrayBuffer();
   const fileHash = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", buffer)), (byte) => byte.toString(16).padStart(2, "0")).join("");
   const kind = { purchases: "purchase", sales: "sale", accounts: "accounts" }[input.kind] as WorkspaceState["imports"][number]["kind"];
-  const existing = current.imports.find((entry) => entry.period_id === periodId && entry.kind === kind && entry.file_sha256 === fileHash);
+  const existing = current.imports.find((entry) => (kind==='accounts'?entry.company_id===period.company_id:entry.period_id===periodId) && entry.kind === kind && entry.file_sha256 === fileHash);
   if (existing) return { row_count: existing.row_count, duplicate_count: existing.duplicate_count, reused: true };
   const source = await readSource(buffer, input.file.name);
   if(source.owner_cuit && input.kind!=='accounts' && current.companies.find(c=>c.id===period.company_id)?.cuit!==source.owner_cuit)throw new Error("El CUIT del archivo ARCA no coincide con la empresa seleccionada.");
@@ -272,7 +272,7 @@ export async function confirmLocalImport(initial: WorkspaceState, periodId: stri
   if (preview.issues.some((issue) => issue.severity === "error")) throw new Error("Revisá las filas con errores antes de importar.");
   let outcome = { row_count: 0, duplicate_count: 0, reused: false };
   await writeLocalDocument(initial, periodId, kind === "accounts" ? "Plan de cuentas" : "Comprobantes", input.file, (state, document) => {
-    const currentImport = state.imports.find((entry) => entry.period_id === periodId && entry.kind === kind && entry.file_sha256 === fileHash);
+    const currentImport = state.imports.find((entry) => (kind==='accounts'?entry.company_id===period.company_id:entry.period_id===periodId) && entry.kind === kind && entry.file_sha256 === fileHash);
     if (currentImport) throw new Error("El archivo ya se importó en otra pestaña. Volvé a consultar el historial.");
     const currentAccounts = state.accounts.filter((account) => account.company_id === period.company_id);
     const allowedParents = new Set([...currentAccounts, ...preview.accounts].map((account) => account.code));

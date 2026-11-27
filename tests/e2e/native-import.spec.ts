@@ -25,7 +25,7 @@ test('importa el formato recibido ARCA y rechaza el CUIT de otra empresa',async(
  await expect(panel.getByText('Se guardó 1 fila. Se omitieron 0 duplicados.')).toBeVisible();
  await page.getByRole('link',{name:'Volver a la empresa',exact:true}).click();
  await page.getByRole('link',{name:'Comenzar preparación del mes',exact:true}).click();
- await page.getByRole('link',{name:'2. Compras',exact:true}).click();
+ await page.getByRole('link',{name:'1. Compras',exact:true}).click();
  await expect(page.getByRole('region',{name:'Cargas confirmadas'}).getByRole('cell',{name:'arca-sintetico.xlsx',exact:true})).toBeVisible();
  await page.reload();
  await expect(page.getByRole('region',{name:'Cargas confirmadas'}).getByRole('cell',{name:'arca-sintetico.xlsx',exact:true})).toBeVisible();

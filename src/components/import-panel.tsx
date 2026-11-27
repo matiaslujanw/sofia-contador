@@ -19,8 +19,8 @@ const accountKinds = {
 };
 const previewPageSize = 8;
 
-function outcomeMessage({ row_count, duplicate_count, reused }: Outcome) {
-  if (reused) return "Este archivo ya se había importado para este tipo y período.";
+function outcomeMessage({ row_count, duplicate_count, reused }: Outcome, kind: ImportKind) {
+  if (reused) return kind === "accounts" ? "Este archivo del plan ya está guardado para esta empresa." : "Este archivo ya se había importado para este tipo y período.";
   const saved = row_count === 1 ? "Se guardó 1 fila." : `Se guardaron ${row_count} filas.`;
   const skipped = duplicate_count === 1 ? "Se omitió 1 duplicado." : `Se omitieron ${duplicate_count} duplicados.`;
   return `${saved} ${skipped}`;
@@ -217,7 +217,7 @@ export function ImportPanel({ month, disabled = false, initialKind = "purchases"
       {disabled && <p className="notice">El período seleccionado no admite importaciones.</p>}
       {error && <p className="notice notice-error" role="alert">{error}</p>}
       {outcome && (
-        <p className="notice notice-success" role="status">{outcomeMessage(outcome)}</p>
+        <p className="notice notice-success" role="status">{outcomeMessage(outcome,kind)}</p>
       )}
       {file&&!outcome&&!saving&&<p className="notice notice-warning">Vista previa sin guardar. Revisá los datos y presioná Confirmar importación para conservarlos al salir.</p>}
 

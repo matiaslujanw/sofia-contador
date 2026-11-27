@@ -4,7 +4,7 @@ Sofía importa comprobantes de compras, comprobantes de ventas y planes de cuent
 
 ## Flujo
 
-1. Seleccioná la empresa y un período abierto.
+1. Seleccioná la empresa. Para compras y ventas, elegí además el período abierto. El plan se administra aparte, en **Plan de cuentas**, y se reutiliza en todos los meses.
 2. Elegí el tipo de importación y cargá el archivo. Para comprobantes, elegí el separador decimal cuando el formato sea ambiguo.
 3. Verificá la correspondencia entre encabezados y campos. Sofía sugiere asignaciones cuando reconoce un encabezado único. Las columnas con el mismo nombre se pueden distinguir por su posición.
 4. Revisá la vista previa paginada. Los errores identifican el campo y la fila del archivo. Para corregir un valor, editá el archivo y volvé a cargarlo.
@@ -52,7 +52,7 @@ Los importadores del navegador y del servidor usan el mismo lector y las mismas 
 
 - Compras. La clave de una empresa combina tipo, punto de venta, número y CUIT del emisor.
 - Ventas. La clave de una empresa combina tipo, punto de venta y número.
-- Plan de cuentas. La clave de una empresa es el código textual.
+- Plan de cuentas. La clave de una empresa es el código textual. Un mismo archivo del plan se reconoce por empresa y SHA-256, aunque se haya archivado en otro mes; no se vuelve a incorporar por cambiar de período.
 - Archivo. SHA-256 identifica el contenido ya confirmado dentro del mismo período y tipo.
 
 El tipo de comprobante admite diferencias de mayúsculas y espacios externos. Otras variaciones de descripción o código requieren un criterio consistente al preparar los archivos. La vista previa omite réplicas idénticas y detiene la confirmación cuando encuentra la misma clave con valores distintos dentro del archivo. La persistencia omite claves ya registradas y conserva la fila anterior.
@@ -104,3 +104,12 @@ La lectura no registra movimientos de libro, conciliaciones ni asientos, ni suma
 Preparar mes muestra Cargas confirmadas y guardadas en Plan/Compras/Ventas. Los originales y las filas confirmadas se consultan sin volver a importarlos. Banco ofrece Abrir análisis guardado para cada extracto: lee el original privado y aplica la última revisión CSV compatible. Se comprueban empresa/CUIT, período, nombre y SHA del PDF, cuentas, saldos, importes, cantidad, orden e identidad de filas antes de restaurar categorías. No se toman importes contables desde el CSV. Si no existe una revisión compatible, se abre el original con clasificación sugerida pendiente de revisión; los respaldos siguen disponibles para descargar. El formato anterior o un papel modificado manualmente puede requerir una revisión nueva. Una corrección guarda otra versión del papel, conservando el original.
 
 Elegir o analizar un archivo solamente muestra la vista previa. Para guardar filas se confirma la importación; para conservar categorías se guarda el papel revisado. Las escrituras confirmadas invalidan las pantallas previamente visitadas para que regresar al inicio no vuelva a mostrar una versión anterior. Se conservan permisos y alcance por organización, empresa y mes; períodos cerrados admiten consulta y reapertura de respaldos, sin escritura.
+
+
+## Plan permanente de empresa
+
+El recorrido mensual empieza con Compras y continúa con Ventas, Banco y Papel impositivo. El plan queda en una sección propia y en Datos permanentes de la portada de empresa; esa sección no muestra selector mensual. Las cuentas se consultan/crean/editan por empresa, incluso cuando el mes de la URL no existe o está cerrado. El historial de originales del plan incluye todos los meses de esa empresa.
+
+La importación se abre expresamente desde Plan de cuentas. Agrega códigos nuevos y conserva las cuentas existentes; cambiar una cuenta se hace con Editar y retirar su uso con Inactiva. No se sobreescriben referencias históricas ni se crean planes separados por mes. La validación de cuentas usadas en períodos cerrados sigue vigente.
+
+Compatibilidad con el archivo existente: documentos/imports aún exigen un período para el respaldo. Al importar cuentas se utiliza el período abierto más reciente de la misma empresa, independientemente del mes consultado; si no existe ninguno, se informa esa condición y se mantiene disponible la edición individual. No se abre ni reabre un mes automáticamente. Esto solo afecta el original y su historial; accounts sigue siendo una tabla por empresa sin period_id. Sin cambios de esquema.

@@ -4,7 +4,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import clsx from "clsx";
 import {
   Building2, CalendarDays, ChevronDown, ClipboardCheck, Compass, FileText, FlaskConical, House,
-  LayoutList, LogOut, Menu, ReceiptText, Settings, ShieldCheck, X, ChartNoAxesCombined,
+  LayoutList, ListTree, LogOut, Menu, ReceiptText, Settings, ShieldCheck, X, ChartNoAxesCombined,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -34,11 +34,11 @@ import { TourEntry, WorkspaceTour } from "./workspace-tour";
 
 const primaryNav = [
   { id: "inicio", icon: House }, { id: "empresas", icon: Building2 }, { id: "cierre", icon: ClipboardCheck },
-  { id: "preparacion", icon: LayoutList }, { id: "control", icon: ClipboardCheck }, { id: "contabilidad", icon: LayoutList }, { id: "comprobantes", icon: ReceiptText }, { id: "documentacion", icon: FileText }, { id: "calendario", icon: CalendarDays },
+  { id: "cuentas", icon: ListTree }, { id: "preparacion", icon: LayoutList }, { id: "control", icon: ClipboardCheck }, { id: "contabilidad", icon: LayoutList }, { id: "comprobantes", icon: ReceiptText }, { id: "documentacion", icon: FileText }, { id: "calendario", icon: CalendarDays },
 ] as const;
 
 const secondaryNav = [
-  { id: "cuentas", icon: LayoutList }, { id: "informes", icon: ChartNoAxesCombined },
+  { id: "informes", icon: ChartNoAxesCombined },
   { id: "auditoria", icon: ShieldCheck }, { id: "configuracion", icon: Settings },
 ] as const;
 
@@ -142,11 +142,14 @@ export function Workspace({ initial, section, mode, email, month, today, company
       }
     },
     async confirmImport({ file, kind, mapping, decimal }) {
-      if (!company || !period) throw new Error("Seleccioná una empresa y un período.");
-      if (mode === "demo") return confirmLocalImport(initial, period.id, { file, kind, mapping, decimal });
+      if (!company) throw new Error("Seleccioná una empresa.");
+      // Accounts belong to the company. Only their original/history uses an open period in the legacy archive.
+      const importPeriod=kind==='accounts'?state.periods.filter(p=>p.company_id===company.id&&p.status==='open').sort((a,b)=>b.month.localeCompare(a.month))[0]:period;
+      if (!importPeriod) throw new Error(kind==='accounts'?"No hay un período abierto para archivar el original del plan. Podés editar las cuentas existentes; para importar abrí un período de respaldo.":"Seleccioná un período de la empresa.");
+      if (mode === "demo") return confirmLocalImport(initial, importPeriod.id, { file, kind, mapping, decimal });
       const body = new FormData();
       body.set("file", file);
-      body.set("context", JSON.stringify({ companyId: company.id, periodId: period.id, kind, mapping, decimal }));
+      body.set("context", JSON.stringify({ companyId: company.id, periodId: importPeriod.id, kind, mapping, decimal }));
       const response = await confirmWorkspaceImport(body);
       if (!response.ok) throw new Error(response.message);
       router.refresh();
@@ -201,10 +204,10 @@ export function Workspace({ initial, section, mode, email, month, today, company
       case "empresas": return <CompaniesPage key={purpose ?? "empresas"} openNew={purpose === "nueva"} />;
       case "cierre": return <ClosingPage key={period?.id ?? `${company?.id}-${month}`} guide={sampleSelected && tourStep === 2} closeGuide={tourStep === 2 ? closeGuideExample : undefined} />;
       case "contabilidad": return <BookPage initialTab={purpose} key={`${company?.id}-${month}-${purpose ?? "current"}`} />;
-      case "preparacion": return <PreparationPage step={purpose} key={`${company?.id}-${month}-${purpose ?? "cuentas"}`} />;
+      case "preparacion": return <PreparationPage step={purpose} key={`${company?.id}-${month}-${purpose ?? "compras"}`} />;
       case "control": return <MonthlyControlPage key={`${company?.id}-${month}`} />;
       case "comprobantes": return <VouchersPage initialDirection={purpose === "ventas" ? "sale" : "purchase"} key={`${period?.id ?? company?.id}-${month}-${purpose}`} guide={sampleSelected && tourStep === 3} closeGuide={tourStep === 3 ? closeGuideExample : undefined} />;
-      case "cuentas": return <AccountsPage key={company?.id} />;
+      case "cuentas": return <AccountsPage initialImport={purpose==='importar'} key={company?.id} />;
       case "documentacion": return <DocumentsPage key={`${period?.id ?? company?.id}-${purpose}`} purpose={purpose} />;
       case "calendario": return <CalendarPage key={`${company?.id}-${month}`} />;
       case "informes": return <CompanyDashboard report />;
@@ -248,7 +251,7 @@ export function Workspace({ initial, section, mode, email, month, today, company
                   <option key={entry.id} value={entry.id}>{companyName(entry)}</option>)}
               </Select>
             </label>}
-            {company && <label className="with-icon"><CalendarDays size={16} aria-hidden="true" /><span className="sr-only">Período</span>
+            {company && section!=="cuentas" && !(section==="documentacion"&&purpose==="cuentas") && <label className="with-icon"><CalendarDays size={16} aria-hidden="true" /><span className="sr-only">Período</span>
               <Select value={month} onChange={(event) => event.target.value === "otro" ? setMonthPicker(true) : navigate(href(section, { month: event.target.value }, scopeQuery))}>
                 {months.map((item) => <option value={item} key={item}>{monthLabel(item, locale)}</option>)}<option value="otro">Otro período…</option>
               </Select>

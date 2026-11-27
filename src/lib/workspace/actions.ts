@@ -258,8 +258,10 @@ async function performWorkspaceImport(form: FormData): Promise<Result<ImportOutc
     const normalized = context.kind === "accounts" ? preview.accounts : preview.vouchers;
     if (!normalized.length) throw new WorkspaceError("No se encontraron filas para importar.");
     const kind = { purchases: "purchase", sales: "sale", accounts: "accounts" }[context.kind];
-    const existing = await access.supabase.from("imports").select("row_count,duplicate_count")
-      .eq("period_id", context.periodId).eq("kind", kind).eq("file_sha256", fileHash).maybeSingle();
+    const previous = access.supabase.from("imports").select("row_count,duplicate_count")
+      .eq(context.kind === 'accounts' ? "company_id" : "period_id", context.kind === 'accounts' ? context.companyId : context.periodId)
+      .eq("kind", kind).eq("file_sha256", fileHash);
+    const existing = await previous.limit(1).maybeSingle();
     if (existing.error) throw new WorkspaceError("No se pudo verificar el historial de importaciones.");
     if (existing.data) return { ok: true, data: { ...existing.data, reused: true } };
     const document = await storeFile(access, {

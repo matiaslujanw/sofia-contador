@@ -8,6 +8,7 @@ import { documentExtensions } from "@/lib/workspace/documents";
 import { companyName, cuitLabel, dayLabel, fileSize, money, monthLabel } from "@/lib/workspace/format";
 import { accountKinds, documentCategories, paymentStatuses, reviewStatuses, xubioStatuses, type Account, type AccountValues, type Voucher, type VoucherClassification } from "@/lib/workspace/model";
 import { ManualVoucher } from "./manual-voucher";
+import { PreparationImports } from "./preparation-imports";
 import { ImportPanel } from "./import-panel";
 import { useWorkspace } from "./workspace-context";
 import { CompanyRequired, PeriodRequired } from "./workspace-operations";
@@ -125,25 +126,33 @@ export function VouchersPage({ guide = false, closeGuide, initialDirection = "pu
 
 const blankAccount: AccountValues = { code: "", name: "", kind: "asset", parent_code: null, category: null, status: "active" };
 
-export function AccountsPage() {
-  const { company, state, href, canEdit, mutate } = useWorkspace();
+export function AccountsPage({initialImport=false}:{initialImport?:boolean}={}) {
+  const { company, state, href, canEdit, mutate, confirmImport, month } = useWorkspace();
+  const [importOpen,setImportOpen]=useState(initialImport);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("");
   const [selected, setSelected] = useState<Account | "new" | null>(null);
   const editable = !!company && canEdit && company.status === "active";
+  const archivePeriod=state.periods.filter(p=>p.company_id===company?.id&&p.status==='open').sort((a,b)=>b.month.localeCompare(a.month))[0];
   const accounts = state.accounts.filter((entry) => entry.company_id === company?.id).sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }));
   const visible = accounts.filter((entry) => (!filter || filter === entry.kind) && `${entry.code} ${entry.name} ${entry.category ?? ""}`.toLowerCase().includes(query.toLowerCase()));
   const account = selected === "new" ? blankAccount : selected;
 
   return <>
-    <Heading title="Plan de cuentas" description={company ? `Clasificación y cuentas de ${companyName(company)}.` : "Administrá las cuentas contables de cada empresa."}
-      actions={editable && <><Link className="button button-secondary" href={href("documentacion", {}, { tipo: "cuentas" })}><FileUp size={17} /> Importar plan</Link>
+    <Heading title="Plan de cuentas" description={company ? `Plan único y permanente de ${companyName(company)}. Se utiliza en todos los meses.` : "Administrá las cuentas contables de cada empresa."}
+      actions={editable && <><button type="button" className="button button-secondary" onClick={()=>setImportOpen(v=>!v)}><FileUp size={17} /> {accounts.length?"Importar cuentas nuevas":"Importar plan de Xubio"}</button>
         <button type="button" className="button button-primary" onClick={() => setSelected("new")}><Plus size={17} /> Nueva cuenta</button></>} />
+    {company&&<section className="panel"><SectionHeading title="Configuración permanente de la empresa" subtitle="Se carga una vez. No se vuelve a cargar al abrir otro mes." action={<Badge>{accounts.length} cuentas guardadas</Badge>}/><p className="muted">Usá Editar para modificar una cuenta o Nueva cuenta para ampliarlo. Importar agrega códigos nuevos; conserva las cuentas ya existentes y sus referencias contables. Para retirar una cuenta, marcala Inactiva.</p>
+    {accounts.some(a=>a.code.startsWith('SIN-CODIGO-'))&&<p className="notice mt-3">{accounts.filter(a=>a.code.startsWith('SIN-CODIGO-')).length} cuentas provienen de filas sin código en Xubio y tienen identificador interno. Revisá sus nombres y rubros antes de usarlas.</p>}
+    <Link className="text-button mt-3" href={href('preparacion')}>Ir al trabajo mensual</Link></section>}
+    {company&&editable&&importOpen&&<section className="panel"><SectionHeading title="Importar al plan permanente" subtitle="Las cuentas se incorporan a esta empresa para todos sus períodos."/>{!archivePeriod&&<p className="notice notice-warning">Para conservar el archivo original hace falta un período de respaldo abierto. El plan existente se puede consultar y editar desde aquí.</p>}
+    <ImportPanel lockedKind initialKind="accounts" month={archivePeriod?.month.slice(0,7)??month} disabled={!archivePeriod} onConfirm={confirmImport}/><button className="text-button mt-3" type="button" onClick={()=>setImportOpen(false)}>Cerrar importación del plan</button></section>}
+    {company&&<PreparationImports kind="accounts"/>}
     {!company ? <CompanyRequired /> : <section className="panel">
       <div className="table-toolbar"><Search label="Buscar cuenta o código" value={query} onChange={setQuery} />
         <Select aria-label="Tipo de cuenta" value={filter} onChange={(event) => setFilter(event.target.value)}><option value="">Todos los tipos</option>
           {Object.entries(accountKinds).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</Select></div>
-      {visible.length ? <div className="table-wrap"><table>
+      {visible.length ? <div className="table-wrap"><table aria-label="Plan permanente">
         <thead><tr><th>Código</th><th>Cuenta</th><th>Tipo</th><th>Cuenta superior</th><th>Categoría</th><th>Estado</th>{editable && <th className="text-right">Acciones</th>}</tr></thead>
         <tbody>{visible.map((entry) => <tr key={entry.id}>
           <td className="numbers cell-nowrap">{entry.code}</td><td className="cell-main">{entry.name}</td><td>{accountKinds[entry.kind]}</td>
@@ -185,6 +194,7 @@ export function DocumentsPage({ purpose }: { purpose?: string }) {
     entry.name.toLowerCase().includes(query.toLowerCase())).sort((a, b) => b.created_at.localeCompare(a.created_at));
   const imports = state.imports.filter((entry) => entry.period_id === period?.id).sort((a, b) => b.created_at.localeCompare(a.created_at));
   const importLabels = { purchase: "Compras", sale: "Ventas", accounts: "Plan de cuentas" };
+  if(purpose==='cuentas')return <AccountsPage initialImport key={company?.id}/>;
   return <>
     <Heading title="Documentación" description={company ? `${companyName(company)} · ${monthLabel(month, locale)}` : "Organizá los respaldos e importá planillas por empresa y período."}
       actions={editable && <button type="button" className="button button-primary" onClick={() => setUploadOpen(true)}><FileUp size={17} /> Subir documento</button>} />

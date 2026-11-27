@@ -1,0 +1,38 @@
+import {expect,test} from '@playwright/test';
+import {shiftMonth,todayIn} from '../../src/lib/workspace/format';
+const company='10000000-0000-4000-8000-000000000011';
+const file={name:'plan-permanente-sintetico.csv',mimeType:'text/csv',buffer:Buffer.from('code;name;kind;status\nPERM-001;Cuenta permanente sintetica;asset;active')};
+
+test('un único plan se importa aparte, se conserva entre meses y se modifica sin un mes abierto seleccionado',async({page})=>{
+ await page.setViewportSize({width:820,height:1180});
+ await page.goto(`/cuentas?empresa=${company}&mes=2020-01`);
+ await expect(page.getByLabel('Período',{exact:true})).toHaveCount(0);
+ await expect(page.getByRole('heading',{name:'Configuración permanente de la empresa'})).toBeVisible();
+ await page.getByRole('button',{name:/Importar (plan de Xubio|cuentas nuevas)/}).click();
+ const panel=page.getByRole('region',{name:'Importar datos'});
+ await panel.locator('input[type=file]').setInputFiles(file);
+ await panel.getByRole('checkbox',{name:'Verifiqué la asignación y los datos del archivo'}).check();
+ await panel.getByRole('button',{name:'Confirmar importación'}).click();
+ await expect(panel.getByText('Se guardó 1 fila. Se omitieron 0 duplicados.')).toBeVisible();
+ const row=page.getByRole('table',{name:'Plan permanente'}).getByRole('row').filter({has:page.getByRole('cell',{name:'PERM-001',exact:true})});
+ await expect(row).toHaveCount(1);
+ await page.goto(`/cuentas?empresa=${company}&mes=${shiftMonth(todayIn().slice(0,7),-1)}`);
+ await expect(row).toHaveCount(1);
+ await page.getByRole('button',{name:'Editar cuenta Cuenta permanente sintetica',exact:true}).click();
+ const dialog=page.getByRole('dialog');await dialog.getByLabel('Nombre',{exact:true}).fill('Cuenta permanente revisada');
+ await dialog.getByRole('button',{name:'Guardar cambios',exact:true}).click();await expect(dialog).toHaveCount(0);
+ await page.reload();await expect(row.getByRole('cell',{name:'Cuenta permanente revisada',exact:true})).toBeVisible();
+ await page.goto(`/inicio?empresa=${company}`);
+ await expect(page.getByRole('region',{name:'Configuración permanente'})).toBeVisible();
+ await page.getByRole('link',{name:'Comenzar preparación del mes',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'Compras del mes',exact:true})).toBeVisible();
+ await expect(page.getByRole('navigation',{name:'Pasos para preparar el mes'}).getByRole('link')).toHaveCount(4);
+ await expect(page.getByRole('region',{name:'Importar datos'}).getByLabel('Tipo de importación')).toHaveValue('purchases');
+ await page.goto(`/cuentas?empresa=${company}`);await expect(row).toHaveCount(1);
+ await page.getByRole('button',{name:'Importar cuentas nuevas',exact:true}).click();
+ await panel.locator('input[type=file]').setInputFiles(file);await panel.getByRole('checkbox',{name:'Verifiqué la asignación y los datos del archivo'}).check();await panel.getByRole('button',{name:'Confirmar importación'}).click();
+ await expect(panel.getByText('Este archivo del plan ya está guardado para esta empresa.')).toBeVisible();
+ await expect(row.getByRole('cell',{name:'Cuenta permanente revisada',exact:true})).toBeVisible();
+ await expect(page.getByRole('region',{name:'Cargas confirmadas'}).getByRole('cell',{name:file.name,exact:true})).toHaveCount(1);
+ await page.goto('/cuentas?empresa=10000000-0000-4000-8000-000000000010');await expect(row).toHaveCount(0);
+});

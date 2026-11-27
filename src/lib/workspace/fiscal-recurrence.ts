@@ -5,7 +5,8 @@ import {shiftMonth} from './format';
 const marker='\n\n[SOFIA_VENCIMIENTO_MENSUAL_V1]\n';
 export const fiscalRuleSchema=z.object({seriesId:z.uuid(),day:z.number().int().min(1).max(31),offset:z.number().int().min(0).max(1),from:z.string().regex(/^20\d{2}-(0[1-9]|1[0-2])$/),active:z.boolean()});
 export type FiscalRule=z.infer<typeof fiscalRuleSchema>;
-export function fiscalNotes(notes:string):{text:string;rule?:FiscalRule}{
+export function fiscalNotes(notes:string|null|undefined):{text:string;rule?:FiscalRule}{
+ notes=notes??'';
  const at=notes.lastIndexOf(marker);if(at<0)return {text:notes};
  try{const parsed=fiscalRuleSchema.safeParse(JSON.parse(notes.slice(at+marker.length)));if(parsed.success)return {text:notes.slice(0,at),rule:parsed.data};}catch{/* Invalid metadata remains visible as ordinary notes. */}
  return {text:notes};

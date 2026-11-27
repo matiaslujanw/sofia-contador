@@ -53,6 +53,7 @@ export function activityLabel(entity: string, action: string) {
   const labels: Record<string, string> = {
     companies: "Empresa", periods: "Período", close_tasks: "Tarea de cierre",
     vouchers: "Comprobante", accounts: "Cuenta contable", documents: "Documento",
+    accounting_journal_entries:'Asiento confirmado',accounting_journal_lines:'Detalle de asiento',accounting_exercises:'Ejercicio contable',accounting_account_profiles:'Propiedades de cuenta',accounting_equivalences:'Equivalencia Xubio',accounting_core:'Núcleo contable',
     imports: "Importación", tax_obligations: "Vencimiento", classification_rules: "Regla de imputación",
     organizations: "Organización", organization_members: "Membresía",
   };

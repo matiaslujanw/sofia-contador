@@ -1,3 +1,4 @@
+import {entrySchema,exerciseSchema,profileSchema} from "@/lib/accounting/core/model";
 import { fiscalRuleSchema } from "./fiscal-recurrence";
 import { z } from "zod";
 import { bookSchema } from "@/lib/accounting/model";
@@ -52,6 +53,11 @@ export const documentContextSchema = z.object({
 });
 
 export const commandSchema = z.discriminatedUnion("type", [
+  exerciseSchema.safeExtend({type:z.literal('core.exercise')}),
+  profileSchema.extend({type:z.literal('core.profile')}),
+  entrySchema.extend({type:z.literal('core.post')}),
+  z.object({type:z.literal('core.reverse'),entryId:uuid,periodId:uuid,exerciseId:uuid,date:z.iso.date(),reason:text(450).min(5),sourceKey:text(200).min(1)}),
+  z.object({type:z.literal('core.exercise.status'),exerciseId:uuid,status:z.enum(['open','closed']),reason:text(1200).min(5)}),
   z.object({ type: z.literal("book.import"), periodId: uuid, values: z.array(bookSchema).min(1).max(500) }),
   z.object({ type: z.literal("book.save"), periodId: uuid, id: uuid.optional(), values: bookSchema }),
   z.object({ type: z.literal("book.void"), id: uuid }),

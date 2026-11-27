@@ -28,12 +28,14 @@ import { AccountsPage, DocumentsPage, VouchersPage } from "./workspace-records";
 import { NextWorkspaceStep, WorkspaceGuide } from "./workspace-onboarding";
 import { BookPage } from "./workspace-book";
 import { XubioAuditPage } from "./workspace-xubio-audit";
+import {CorePage,PendingCoreModule} from "./workspace-core";
 import { PreparationPage } from "./workspace-preparation";
 import { MonthlyControlPage } from "./workspace-monthly";
 import { ClosingPage, CompaniesPage } from "./workspace-operations";
 import { Field, Input, Modal, Select } from "./workspace-ui";
 import { TourEntry, WorkspaceTour } from "./workspace-tour";
 
+const coreNav=[{id:'nucleo',icon:House},{id:'cuentas',icon:ListTree},{id:'diario',icon:LayoutList},{id:'mayor',icon:ListTree},{id:'balance',icon:ChartNoAxesCombined},{id:'compras',icon:ReceiptText},{id:'ventas',icon:ReceiptText},{id:'bancos',icon:Building2},{id:'impuestos',icon:CalendarDays},{id:'xubio',icon:ShieldCheck},{id:'estados',icon:ChartNoAxesCombined},{id:'configuracion',icon:Settings}] as const;
 const primaryNav = [
   { id: "inicio", icon: House }, { id: "empresas", icon: Building2 }, { id: "cierre", icon: ClipboardCheck },
   { id: "cuentas", icon: ListTree }, { id: "preparacion", icon: LayoutList }, { id: "control", icon: ClipboardCheck }, { id: "xubio", icon: ShieldCheck }, { id: "contabilidad", icon: LayoutList }, { id: "comprobantes", icon: ReceiptText }, { id: "documentacion", icon: FileText }, { id: "calendario", icon: CalendarDays },
@@ -177,14 +179,16 @@ export function Workspace({ initial, section, mode, email, month, today, company
       </Link>
       <nav aria-label="Navegación principal" className="nav-groups">
         {company && <Link className="text-button" href={href("inicio", { companyId: undefined })} onClick={close}>← Todas las empresas</Link>}
-        <ul className="nav-list">{primaryNav.filter(item => company || item.id === "inicio" || item.id === "empresas").map(({ id, icon: Icon }) =>
+        {company&&<ul className="nav-list" aria-label="Núcleo contable">{coreNav.map(({id,icon:Icon})=><li key={id}><Link className="nav-link" aria-current={section===id?'page':undefined} href={href(id)} onClick={close}><Icon size={19} aria-hidden="true"/><span>{sections[id]}{(['bancos','impuestos','estados'] as string[]).includes(id)&&<small className="muted"> · Pendiente</small>}</span></Link></li>)}</ul>}
+        <details className="nav-more" open={!company||primaryNav.some(i=>i.id===section)&&!coreNav.some(i=>i.id===section)||undefined}><summary>Herramientas existentes<ChevronDown size={15}/></summary>
+        <ul className="nav-list">{primaryNav.filter(item => (company || item.id === "inicio" || item.id === "empresas")&&(!company||!coreNav.some(c=>c.id===item.id))).map(({ id, icon: Icon }) =>
           <li key={id}><Link className="nav-link" aria-current={section === id ? "page" : undefined} href={href(id, id === "empresas" ? { companyId: undefined } : undefined)} onClick={close}>
             <Icon size={19} strokeWidth={1.7} aria-hidden="true" />{sections[id]}
           </Link></li>)}
-        </ul>
+        </ul></details>
         <details className="nav-more" open={secondaryNav.some((item) => item.id === section) || undefined}>
           <summary>Más herramientas<ChevronDown size={15} aria-hidden="true" /></summary>
-          <ul className="nav-list">{secondaryNav.filter(item => company || item.id === "configuracion").map(({ id, icon: Icon }) =>
+          <ul className="nav-list">{secondaryNav.filter(item => (company || item.id === "configuracion")&&(!company||!coreNav.some(c=>c.id===item.id))).map(({ id, icon: Icon }) =>
             <li key={id}><Link className="nav-link" aria-current={section === id ? "page" : undefined} href={href(id)} onClick={close}>
               <Icon size={18} strokeWidth={1.7} aria-hidden="true" />{sections[id]}
             </Link></li>)}
@@ -207,6 +211,9 @@ export function Workspace({ initial, section, mode, email, month, today, company
   const view = (() => {
     if (!organization) return <SettingsPage />;
     switch (section) {
+      case 'nucleo':case 'diario':case 'mayor':case 'balance':return <CorePage view={section} key={`${company?.id}-${month}-${section}`}/>;
+      case 'compras':case 'ventas':return <VouchersPage initialDirection={section==='ventas'?'sale':'purchase'} key={`${company?.id}-${month}-${section}`}/>;
+      case 'bancos':case 'impuestos':case 'estados':return <PendingCoreModule name={section==='bancos'?'Bancos':section==='impuestos'?'Impuestos':'Estados contables'}/>;
       case "inicio": return company ? <CompanyHome /> : <StudyDashboard />;
       case "empresas": return <CompaniesPage key={purpose ?? "empresas"} openNew={purpose === "nueva"} />;
       case "cierre": return <ClosingPage key={period?.id ?? `${company?.id}-${month}`} guide={sampleSelected && tourStep === 2} closeGuide={tourStep === 2 ? closeGuideExample : undefined} />;

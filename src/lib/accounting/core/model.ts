@@ -1,0 +1,15 @@
+import {z} from 'zod';
+export type Exercise={id:string;organization_id:string;company_id:string;name:string;starts_on:string;ends_on:string;status:'open'|'closed';status_reason:string};
+export type AccountProfile={id:string;organization_id:string;company_id:string;account_id:string;heading:string;subheading:string;nature:'debit'|'credit';postable:boolean};
+export type AccountEquivalence={id:string;organization_id:string;company_id:string;account_id:string;external_code:string;external_system:'Xubio'};
+export type Party={id:string;organization_id:string;company_id:string;cuit:string;name:string;customer:boolean;supplier:boolean;active:boolean};
+export type Entry={id:string;organization_id:string;company_id:string;period_id:string;exercise_id:string;number:number;date:string;description:string;currency:string;status:'confirmed';source_key:string;duplicate_reviewed?:boolean;request_hash:string;content_hash:string;voucher_id:string|null;document_id:string|null;reversal_of:string|null;created_by:string;created_at:string};
+export type EntryLine={id:string;organization_id:string;company_id:string;entry_id:string;position:number;account_id:string;party_id:string|null;debit:string;credit:string};
+export type CoreState={ready:boolean;exercises:Exercise[];profiles:AccountProfile[];equivalences:AccountEquivalence[];entries:Entry[];lines:EntryLine[];parties:Party[]};
+export const emptyCore:CoreState={ready:true,exercises:[],profiles:[],equivalences:[],entries:[],lines:[],parties:[]};
+const amount=z.string().regex(/^\d{1,14}(\.\d{1,2})?$/,'Usá importes positivos, con hasta dos decimales.');
+export const entryLineSchema=z.object({account_id:z.uuid(),party_id:z.uuid().nullable().default(null),debit:amount,credit:amount});
+export const entrySchema=z.object({periodId:z.uuid(),exerciseId:z.uuid(),date:z.iso.date(),description:z.string().trim().min(1).max(500),sourceKey:z.string().min(1).max(200),voucherId:z.uuid().nullable(),documentId:z.uuid().nullable(),allowDuplicate:z.boolean().default(false),lines:z.array(entryLineSchema).min(2).max(200)});
+export type EntryInput=z.input<typeof entrySchema>;
+export const exerciseSchema=z.object({companyId:z.uuid(),name:z.string().trim().min(1).max(120),startsOn:z.iso.date(),endsOn:z.iso.date()}).refine(v=>v.startsOn<=v.endsOn,'El cierre debe ser posterior al inicio.');
+export const profileSchema=z.object({accountId:z.uuid(),heading:z.string().trim().max(120),subheading:z.string().trim().max(120),nature:z.enum(['debit','credit']),postable:z.boolean(),xubioCode:z.string().trim().max(80).nullable()});

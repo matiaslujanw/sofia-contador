@@ -1,3 +1,5 @@
+import {applyCoreCommand} from "@/lib/accounting/core/local";
+import {coreState} from "@/lib/accounting/core/engine";
 import {withFiscalRule} from "./fiscal-recurrence";
 import { validateBook } from "@/lib/accounting/engine";
 import { previewImport, readSource, type ColumnMapping, type ImportKind } from "@/lib/imports";
@@ -67,6 +69,13 @@ export function mutateLocal(initial: WorkspaceState, input: Command) {
     const org = requireEntry(state.organization);
     const action = "id" in command && command.id ? "UPDATE" : "INSERT";
     if (org.role === "viewer") throw new Error("No tenés permiso para modificar registros.");
+    if(command.type.startsWith('core.')){
+      const result=applyCoreCommand(state,command,id);
+      const periodId='periodId' in command?command.periodId:null;
+      const companyId='companyId' in command?command.companyId:periodId?state.periods.find(p=>p.id===periodId)?.company_id??null:null;
+      if(result===state){if('sourceKey' in command)id=coreState(state).entries.find(e=>e.source_key===command.sourceKey&&e.period_id===periodId)?.id??id;return state;}
+      return withEvent(result,'accounting_core',id,companyId,periodId,action);
+    }
     switch (command.type) {
       case "book.import": {
         const period=openPeriod(state,command.periodId),company=requireEntry(state.companies.find(c=>c.id===period.company_id));
@@ -144,6 +153,9 @@ export function mutateLocal(initial: WorkspaceState, input: Command) {
         const company = requireEntry(state.companies.find((entry) => entry.id === command.companyId));
         if (company.status !== "active") throw new Error("La empresa está archivada.");
         const previous = command.id ? requireEntry(siblings.find((account) => account.id === id)) : undefined;
+        const core=coreState(state);
+        if(previous&&core.lines.some(l=>l.account_id===previous.id)&&(previous.kind!==command.values.kind||previous.parent_code!==command.values.parent_code))throw new Error('Clasificación histórica de cuenta con Diario confirmado.');
+        if(command.values.parent_code&&state.accounts.some(a=>a.company_id===company.id&&a.code===command.values.parent_code&&core.lines.some(l=>l.account_id===a.id)))throw new Error('La cuenta superior ya tiene movimientos confirmados.');
         if (previous && (previous.kind !== command.values.kind || previous.category !== command.values.category) && state.vouchers.some((voucher) => voucher.account_id === id && state.periods.some((period) => period.id === voucher.period_id && period.status === "closed"))) {
           throw new Error("La cuenta tiene comprobantes en períodos cerrados.");
         }
@@ -187,6 +199,7 @@ export function mutateLocal(initial: WorkspaceState, input: Command) {
         const record = { id, company_id: period.company_id, period_id: period.id, title: command.title, due_on: command.dueOn, amount: command.amount, status: command.status, filed_on: command.filedOn, paid_on: command.paidOn, document_id: command.documentId, notes: withFiscalRule(command.notes,command.recurrence) };
         return withEvent({ ...state, obligations: reorder(state.obligations, record) }, "tax_obligations", id, period.company_id, period.id, action);
       }
+      case 'core.exercise':case 'core.profile':case 'core.post':case 'core.reverse':case 'core.exercise.status':throw new Error('Comando de núcleo ya procesado.');
       case "organization.create":
       case "organization.member":
         throw new Error("La gestión de usuarios y organizaciones está disponible con Supabase conectado.");

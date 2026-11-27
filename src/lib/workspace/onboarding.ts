@@ -21,6 +21,7 @@ export type OnboardingStep = {
 };
 
 export const sectionGuide = {
+  nucleo:'Configurá el ejercicio y consultá el núcleo de asientos confirmados.',diario:'Confirmá asientos balanceados y corregí mediante reversión trazable.',mayor:'Consultá saldos iniciales, movimientos y saldo final por cuenta.',balance:'Revisá las sumas y saldos del Diario confirmado por mes, trimestre o ejercicio.',compras:'Consultá las compras existentes; su contabilización automática al nuevo Diario está pendiente.',ventas:'Consultá las ventas existentes; su contabilización automática al nuevo Diario está pendiente.',bancos:'La integración bancaria al Diario está pendiente. Las herramientas anteriores se conservan.',impuestos:'La integración impositiva al Diario está pendiente. Las herramientas anteriores se conservan.',estados:'La generación de estados contables de presentación está pendiente.',
   inicio: "Elegí una empresa y entrá en sus tareas del mes.",
   preparacion: "Prepará compras, ventas, resumen bancario y papel impositivo de cada mes. El plan de cuentas es una configuración permanente de la empresa.",
   empresas: "Creá y actualizá la ficha de cada cliente. Podés archivar empresas y conservar su historial.",

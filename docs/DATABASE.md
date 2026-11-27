@@ -61,3 +61,11 @@ La migración `20261126000100_operating_book.sql` crea `book_records`, política
 Aplicá esta migración en el mismo proyecto Supabase usado por Vercel. No se cambian las tablas contables previas. Después verificá desde dos usuarios con roles diferentes: alta, consulta, pago parcial, rechazo de sobrepago, conciliación, cierre e intento de modificación. Hasta aplicar la migración, Contabilidad operativa muestra su estado de activación y conserva habilitados los módulos previos. Las pruebas locales usan sustitutos de Auth/Storage; la verificación contra Supabase real debe registrarse por separado.
 
 `20261126000200_asset_frequency.sql` amplía la validación del libro para la frecuencia mensual/anual de activos. Debe aplicarse después de `20261126000100`; no modifica registros existentes, que conservan frecuencia mensual si no tienen ese dato. Ambas migraciones siguen pendientes de activación en producción hasta contar con acceso Supabase.
+
+## Núcleo contable relacional — etapa 1
+
+`20261127000100_accounting_core.sql` incorpora diez tablas sin trasladar ni borrar registros: ejercicios; perfiles del plan; equivalencias Xubio; contrapartes cliente/proveedor; relación de comprobantes con contrapartes; cuentas bancarias; cabeceras del Diario; líneas del Diario; movimientos bancarios; snapshots de historial. Reutiliza empresa/período/cuenta/comprobante/documento/usuario existentes. Referencias compuestas y RLS mantienen el aislamiento. Índices por origen, ejercicio/correlativo, cuenta y fecha sostienen los accesos nuevos.
+
+Los asientos se confirman mediante `post_accounting_entry`, con saldo exacto, fecha/cuenta autorizadas, numeración serializada, clave de origen única y huella SHA-256; cabecera y líneas se transaccionan. Restricciones diferidas rechazan una cabecera incompleta y triggers prohíben modificar/borrar confirmados. La reversión inserta otro asiento con referencia única al original. Cambios de naturaleza/imputabilidad con historia se rechazan. Los maestros de contrapartes/bancos y la equivalencia están preparados; su integración a los módulos operativos es posterior.
+
+[Diagnóstico y entrega](etapa-1/ENTREGA.md), [activación](etapa-1/ACTIVACION.md). No se certificó la activación remota. La app conserva el funcionamiento previo y deshabilita el núcleo si falta la migración.

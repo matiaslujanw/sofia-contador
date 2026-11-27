@@ -1,4 +1,5 @@
 export const sections = {
+  nucleo:'Dashboard',diario:'Libro Diario',mayor:'Libro Mayor',balance:'Balance de sumas y saldos',compras:'Compras',ventas:'Ventas',bancos:'Bancos',impuestos:'Impuestos',estados:'Estados contables',
   inicio: "Inicio",
   empresas: "Empresas",
   cierre: "Cierre mensual",

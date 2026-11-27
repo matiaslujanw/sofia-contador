@@ -1,3 +1,4 @@
+import {emptyCore,type CoreState} from "@/lib/accounting/core/model";
 import type { BookRecord } from "@/lib/accounting/model";
 
 export const taskStatuses = {
@@ -96,12 +97,12 @@ export type WorkspaceState = {
   organizations: Organization[]; members: Member[]; organization: Organization | null; companies: Company[]; periods: Period[];
   tasks: Task[]; documents: Document[]; accounts: Account[]; vouchers: Voucher[]; rules: ClassificationRule[];
   imports: ImportRecord[]; activity: AuditEvent[]; obligations: Obligation[];
-  bookRecords: BookRecord[]; accountingReady: boolean;
+  bookRecords: BookRecord[]; accountingReady: boolean; core?:CoreState;
 };
 
 export const emptyWorkspace: WorkspaceState = {
   organizations: [], members: [], organization: null, companies: [], periods: [], tasks: [], documents: [],
-  accounts: [], vouchers: [], rules: [], imports: [], activity: [], obligations: [], bookRecords: [], accountingReady: true,
+  accounts: [], vouchers: [], rules: [], imports: [], activity: [], obligations: [], bookRecords: [], accountingReady: true, core:emptyCore,
 };
 
 export const defaultClassification: VoucherClassification = {

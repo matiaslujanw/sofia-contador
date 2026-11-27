@@ -41,6 +41,7 @@ export function StudyDashboard() {
 }
 
 const companyTools = [
+  {title:'Núcleo contable',description:'Ejercicios, Diario confirmado, Mayor y balance de sumas y saldos.',section:'nucleo',icon:NotebookPen},
   { title: "Vencimientos fiscales", description: "Configurar fechas habituales y revisar vencimientos de ARCA, IIBB y TEM.", section: "calendario", icon: CalendarClock },
   { title: "Compras y ventas", description: "Cargar comprobantes manuales, importar y revisar su clasificación.", section: "comprobantes", icon: ReceiptText },
   { title: "Clientes y proveedores", description: "Saldos iniciales, cuentas corrientes, cobros y pagos parciales.", section: "contabilidad", tab: "current", icon: Users },

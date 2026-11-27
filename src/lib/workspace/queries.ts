@@ -1,4 +1,5 @@
 import "server-only";
+import {emptyCore,type CoreState,type Exercise,type AccountProfile,type AccountEquivalence,type Entry,type EntryLine,type Party} from "@/lib/accounting/core/model";
 import type { BookRecord } from "@/lib/accounting/model";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
@@ -10,10 +11,12 @@ import {
 const voucherColumns = "id,organization_id,company_id,period_id,direction,date,receipt_type,point_of_sale,receipt_number,counterparty_cuit,counterparty_name,currency,exchange_rate::text,taxable::text,untaxed::text,exempt::text,vat::text,other_taxes::text,total::text,vat_breakdown,account_id,category,concept,cost_center,payment_status,payment_method,deductible_vat::text,notes,review_status,xubio_status,document_id";
 const pageSize = 500;
 
-async function rows<T>(client: SupabaseClient, table: string, org: string, columns = "*") {
+async function rows<T>(client: SupabaseClient, table: string, org: string, columns = "*", companyId?:string) {
   const records: T[] = [];
   for (let offset = 0; ; offset += pageSize) {
-    const { data, error } = await client.from(table).select(columns).eq("organization_id", org).order("id").range(offset, offset + pageSize - 1);
+    let query=client.from(table).select(columns).eq("organization_id",org);
+    if(companyId)query=query.eq('company_id',companyId);
+    const {data,error}=await query.order('id').range(offset,offset+pageSize-1);
     if (error) throw new Error("No se pudo consultar el espacio de trabajo.");
     records.push(...(data as unknown as T[]));
     if (data.length < pageSize) return records;
@@ -29,7 +32,7 @@ function normalizeCompany(company: Company): Company {
   };
 }
 
-export async function loadWorkspace(client: SupabaseClient, userId: string, orgId?: string): Promise<WorkspaceState> {
+export async function loadWorkspace(client: SupabaseClient, userId: string, orgId?: string, coreCompanyId?:string): Promise<WorkspaceState> {
   const membership = await client.from("organization_members").select("organization_id,role,organizations(id,name,locale,currency,timezone)").eq("user_id", userId);
   if (membership.error) throw new Error("No se pudieron consultar tus organizaciones.");
   const orgRows = membership.data as unknown as { role: Organization["role"]; organizations: Omit<Organization, "role"> | null }[];
@@ -61,10 +64,18 @@ export async function loadWorkspace(client: SupabaseClient, userId: string, orgI
     bookRecords.push(...result.data as unknown as BookRecord[]);
     if (result.data.length < pageSize) break;
   }
+  let core:CoreState={...emptyCore,ready:false};
+  const check=await client.from('accounting_exercises').select('id').eq('organization_id',id).limit(1);
+  if(check.error&&!['42P01','PGRST205'].includes(check.error.code))throw new Error('No se pudo consultar el núcleo contable.');
+  if(!check.error&&!coreCompanyId)core={...emptyCore,ready:true};
+  if(!check.error&&coreCompanyId&&companies.some(c=>c.id===coreCompanyId&&c.organization_id===id)){const [exercises,profiles,equivalences,entries,lines,parties]=await Promise.all([
+    rows<Exercise>(client,'accounting_exercises',id,'*',coreCompanyId),rows<AccountProfile>(client,'accounting_account_profiles',id,'*',coreCompanyId),rows<AccountEquivalence>(client,'accounting_equivalences',id,'*',coreCompanyId),
+    rows<Entry>(client,'accounting_journal_entries',id,'*',coreCompanyId),rows<EntryLine>(client,'accounting_journal_lines',id,'id,organization_id,company_id,entry_id,position,account_id,party_id,debit::text,credit::text',coreCompanyId),rows<Party>(client,'accounting_parties',id,'*',coreCompanyId),
+  ]);core={ready:true,exercises,profiles,equivalences,entries,lines,parties};}
   if (activity.error || members.error) throw new Error("No se pudo consultar la actividad o membresía.");
   return {
     organizations, organization, companies: companies.map(normalizeCompany).sort((a, b) => a.legal_name.localeCompare(b.legal_name)),
-    periods, tasks, documents, accounts, vouchers, rules, imports, bookRecords, accountingReady,
+    periods, tasks, documents, accounts, vouchers, rules, imports, bookRecords, accountingReady, core,
     activity: activity.data as AuditEvent[], members: members.data as Member[], obligations,
   };
 }

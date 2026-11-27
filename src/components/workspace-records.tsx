@@ -7,6 +7,8 @@ import { demoTourVoucherId } from "@/lib/workspace/demo";
 import { documentExtensions } from "@/lib/workspace/documents";
 import { companyName, cuitLabel, dayLabel, fileSize, money, monthLabel } from "@/lib/workspace/format";
 import { accountKinds, documentCategories, paymentStatuses, reviewStatuses, xubioStatuses, type Account, type AccountValues, type Voucher, type VoucherClassification } from "@/lib/workspace/model";
+import {accountProperties,coreState} from "@/lib/accounting/core/engine";
+import {AccountCoreProperties} from "./account-core-properties";
 import { NoActivityControl } from "./no-activity-control";
 import { ManualVoucher } from "./manual-voucher";
 import { PreparationImports } from "./preparation-imports";
@@ -129,6 +131,7 @@ export function VouchersPage({ guide = false, closeGuide, initialDirection = "pu
 const blankAccount: AccountValues = { code: "", name: "", kind: "asset", parent_code: null, category: null, status: "active" };
 
 export function AccountsPage({initialImport=false}:{initialImport?:boolean}={}) {
+  const [properties,setProperties]=useState<Account|null>(null);
   const { company, state, href, canEdit, mutate, confirmImport, month } = useWorkspace();
   const [importOpen,setImportOpen]=useState(initialImport);
   const [query, setQuery] = useState("");
@@ -155,15 +158,18 @@ export function AccountsPage({initialImport=false}:{initialImport?:boolean}={}) 
         <Select aria-label="Tipo de cuenta" value={filter} onChange={(event) => setFilter(event.target.value)}><option value="">Todos los tipos</option>
           {Object.entries(accountKinds).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</Select></div>
       {visible.length ? <div className="table-wrap"><table aria-label="Plan permanente">
-        <thead><tr><th>Código</th><th>Cuenta</th><th>Tipo</th><th>Cuenta superior</th><th>Categoría</th><th>Estado</th>{editable && <th className="text-right">Acciones</th>}</tr></thead>
+        <thead><tr><th>Código</th><th>Cuenta</th><th>Tipo</th><th>Cuenta superior</th><th>Categoría</th><th>Estado</th>{coreState(state).ready&&<><th>Nivel / naturaleza</th><th>Rubro / subrubro</th><th>Imputación / Xubio</th></>}{editable && <th className="text-right">Acciones</th>}</tr></thead>
         <tbody>{visible.map((entry) => <tr key={entry.id}>
           <td className="numbers cell-nowrap">{entry.code}</td><td className="cell-main">{entry.name}</td><td>{accountKinds[entry.kind]}</td>
           <td>{entry.parent_code ?? "—"}</td><td>{entry.category ?? "—"}</td>
           <td><Badge dot tone={entry.status === "active" ? "positive" : "neutral"}>{entry.status === "active" ? "Activa" : "Inactiva"}</Badge></td>
-          {editable && <td><div className="table-actions"><button className="button button-secondary" type="button" onClick={() => setSelected(entry)} aria-label={`Editar cuenta ${entry.name}`}>Editar</button></div></td>}
+          {coreState(state).ready&&(()=>{const p=accountProperties(state,entry),m=coreState(state).equivalences.find(e=>e.account_id===entry.id);return <><td>{p.level} · {p.nature==='debit'?'Deudora':'Acreedora'}</td><td>{p.heading||'Sin clasificar'}<small>{p.subheading}</small></td><td>{p.postable?'Movimiento':'Agrupadora'}<small>{m?.external_code??'Sin equivalencia explícita'}</small></td></>;})()}
+          {editable && <td><div className="table-actions"><button className="button button-secondary" type="button" onClick={() => setSelected(entry)} aria-label={`Editar cuenta ${entry.name}`}>Editar</button>{coreState(state).ready&&<button className="button button-secondary" onClick={()=>setProperties(entry)} aria-label={`Propiedades de ${entry.name}`}>Propiedades</button>}</div></td>}
         </tr>)}</tbody>
       </table></div> : <Empty icon={ListTree} title={query || filter ? "Sin cuentas para estos filtros" : "Sin cuentas contables"} text="Podés crear una cuenta o importar un plan de cuentas." />}
     </section>}
+    {properties&&<AccountCoreProperties account={properties} close={()=>setProperties(null)}/>}
+    {company&&coreState(state).ready&&<details className="panel"><summary>Revisar cuentas apropiadas para servicios de seguridad</summary><p className="muted mt-3">Compará con tu plan antes de crear cuentas. No se agrega ninguna cuenta automáticamente: servicios de vigilancia, haberes y cargas sociales, uniformes y elementos de protección, capacitación y habilitaciones, seguros, equipamiento de seguridad, amortización acumulada, IVA, IIBB y TEM. Evitá duplicar cuentas ya importadas de Xubio.</p></details>}
     {editable && company && account && <Modal title={selected === "new" ? "Nueva cuenta" : "Editar cuenta"} description={companyName(company)} close={() => setSelected(null)}>
       <ActionForm close={() => setSelected(null)} submit={async (data) => {
         await mutate({ type: "account.save", companyId: company.id, id: selected && selected !== "new" ? selected.id : undefined, values: {

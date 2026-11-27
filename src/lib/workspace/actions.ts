@@ -79,6 +79,11 @@ async function performWorkspaceMutation(input: unknown): Promise<Result<{ id?: s
     const { supabase, userId } = await liveAccess();
     const command = commandSchema.parse(input);
     switch (command.type) {
+      case 'core.exercise':return {ok:true,data:{id:checked(await supabase.rpc('create_accounting_exercise',{target_company:command.companyId,exercise_name:command.name,start_date:command.startsOn,end_date:command.endsOn}))}};
+      case 'core.profile':return {ok:true,data:{id:checked(await supabase.rpc('save_accounting_profile',{target_account:command.accountId,heading:command.heading,subheading:command.subheading,nature:command.nature,postable:command.postable,xubio_code:command.xubioCode}))}};
+      case 'core.post':return {ok:true,data:{id:checked(await supabase.rpc('post_accounting_entry',{target_period:command.periodId,target_exercise:command.exerciseId,entry_date:command.date,concept:command.description,source:command.sourceKey,entry_lines:command.lines,related_voucher:command.voucherId,related_document:command.documentId,allow_duplicate:command.allowDuplicate}))}};
+      case 'core.reverse':return {ok:true,data:{id:checked(await supabase.rpc('reverse_accounting_entry',{target_entry:command.entryId,target_period:command.periodId,target_exercise:command.exerciseId,entry_date:command.date,reason:command.reason,source:command.sourceKey}))}};
+      case 'core.exercise.status':return {ok:true,data:{id:checked(await supabase.rpc('set_accounting_exercise_status',{target_exercise:command.exerciseId,new_status:command.status,reason:command.reason}))}};
       case "book.import": {
         const period=await periodScope(supabase,command.periodId);
         const state=await loadWorkspace(supabase,userId,period.organization_id);

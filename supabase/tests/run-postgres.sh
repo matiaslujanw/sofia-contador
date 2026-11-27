@@ -22,4 +22,5 @@ for migration in "$project_dir"/supabase/migrations/*.sql; do
 done
 psql -X -h "$test_dir" -d postgres -q -o /dev/null -v ON_ERROR_STOP=1 -f "$project_dir/supabase/tests/workflows.sql"
 psql -X -h "$test_dir" -d postgres -q -o /dev/null -v ON_ERROR_STOP=1 -f "$project_dir/supabase/tests/operating-book.sql"
+psql -X -h "$test_dir" -d postgres -q -v ON_ERROR_STOP=1 -f "$project_dir/supabase/tests/accounting-core.sql"
 printf '%s\n' 'Migrations and accounting policy checks passed.'

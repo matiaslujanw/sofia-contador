@@ -2,7 +2,7 @@ import {expect,test} from '@playwright/test';
 import {utils,write,read} from 'xlsx';
 import {readFile} from 'node:fs/promises';
 import {createDemoWorkspace} from '../../src/lib/workspace/demo';
-import {todayIn} from '../../src/lib/workspace/format';
+import {todayIn,shiftMonth} from '../../src/lib/workspace/format';
 import {pair} from '../../src/lib/accounting/engine';
 import type {Account} from '../../src/lib/workspace/model';
 const companyId='10000000-0000-4000-8000-000000000010',month=todayIn().slice(0,7);
@@ -13,7 +13,10 @@ function seed(){const s=createDemoWorkspace(month),company=s.companies.find(c=>c
 function xlsx(name:string,rows:(string|number)[][]){const book=utils.book_new();utils.book_append_sheet(book,utils.aoa_to_sheet(rows),'Datos');return {name,mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',buffer:write(book,{type:'buffer',bookType:'xlsx',compression:true}) as Buffer};}
 const sources={
  'Libro Diario / asientos detallados':xlsx('diario-sintetico.xlsx',[
- ['Fecha','Documento','Código','Cuenta','Debe','Haber'],[`${month}-05`,'Asiento de prueba','501','Gastos sintéticos',10,0],[`${month}-05`,'Asiento de prueba','101','Banco sintético',0,10],
+ ['N°','Fecha','Documento/Concepto','Código','Cuenta','Año','Mes','Debe','Haber'],
+ ['1',`${shiftMonth(month,-1)}-05`,'Prueba mes anterior','501','Gastos sintéticos','','',30,0],['',`${shiftMonth(month,-1)}-05`,'','101','Banco sintético','','',0,30],
+ ['2',`${month}-05`,'Asiento de prueba','501','Gastos sintéticos','','',10,0],['',`${month}-05`,'','101','Banco sintético','','',0,10],
+ ['3',`${shiftMonth(month,1)}-05`,'Prueba mes siguiente','501','Gastos sintéticos','','',20,0],['',`${shiftMonth(month,1)}-05`,'','101','Banco sintético','','',0,20],
  ]),
  'Libro Mayor':xlsx('mayor-sintetico.xlsx',[
  ['Fecha','Documento','Cuenta','Debe','Haber','Saldo'],[`${month}-01`,'Saldo Inicial','Banco sintético',0,0,1000],[`${month}-05`,'Asiento de prueba','Banco sintético',0,10,990],
@@ -35,6 +38,7 @@ test('guarda reportes mensuales, cruza, exporta XLS y conserva el lote sin reenv
   await expect(page.getByText('Reporte guardado. Podés salir y recuperarlo en esta empresa y mes.',{exact:true})).toBeVisible();
  }
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ await expect(page.getByRole('region',{name:'Detalle del Diario por mes'})).toContainText('Asientos en el archivo: 3 · Asientos del mes seleccionado: 1 · Renglones del mes: 2');
  await page.getByRole('checkbox',{name:/Verifiqué la empresa, la moneda ARS/}).check();
  await expect(page.getByText('Cruce habilitado',{exact:true})).toBeVisible();
  const selection=page.getByRole('checkbox',{name:`Confirmar faltante book:${expected}`,exact:true});await expect(selection).toBeEnabled();await selection.check();

@@ -1,9 +1,10 @@
 import {expect,test} from 'vitest';
+import {utils,write} from 'xlsx';
 import {createDemoWorkspace} from '@/lib/workspace/demo';
 import type {Account} from '@/lib/workspace/model';
 import type {SourceTable} from '@/lib/imports';
 import {pair} from './engine';
-import {parseXubioReport,auditXubio,exportAuditRecords,makeCandidates,emptyAuditMapping,type Candidate,type XubioReport} from './xubio-audit';
+import {parseXubioReport,readXubioReport,journalEntries,auditXubio,exportAuditRecords,makeCandidates,emptyAuditMapping,type Candidate,type XubioReport} from './xubio-audit';
 import {auditSettingsCsv,restoreAuditSettings,auditManifestCsv,auditExportHistory} from './audit-archive';
 import {xubioWorkbook,xubioRows} from './xubio';
 import {digest} from './xubio-audit';
@@ -94,4 +95,30 @@ test('una misma salida de banco con otra imputación queda en duda, no como falt
  const result=auditXubio([c],reports(11),[...accounts,alternate],'2026-09',true);
  expect(result.findings[0].status).toBe('ambiguous');expect(result.findings[0].evidence.join(' ')).toContain('imputación');
  expect(()=>exportAuditRecords(result,new Set(['other']),company,period.id,[...accounts,alternate],'2026-09')).toThrow(/solamente/);
+});
+
+
+test('lee Diario nativo N° y Documento/Concepto, conserva la cabecera y separa meses',async()=>{
+ const rows=[['N°','Fecha','Documento/Concepto','Código','Cuenta','Año','Mes','Debe','Haber',''],
+ ['1',46177,'Ejemplo de junio','501','Comisiones sintéticas','2026','Junio',30,'',''],['',46177,'','101','Banco sintético','2026','Junio','',30,''],
+ ['2',46270,'Cargo de prueba','501','Comisiones sintéticas','2026','Septiembre',10,'',''],['2',46270,'','101','Banco sintético','2026','Septiembre','',10,''],
+ ['3',46300,'Ejemplo de octubre','501','Comisiones sintéticas','2026','Octubre',20,'',''],['',46300,'','101','Banco sintético','2026','Octubre','',20,'']];
+ // Use actual Excel date cell formats; the sample is entirely synthetic.
+ const sheet=utils.aoa_to_sheet(rows);for(let row=1;row<rows.length;row++)sheet[utils.encode_cell({r:row,c:1})].z='dd/mm/yyyy';
+ const book=utils.book_new();utils.book_append_sheet(book,sheet,'Diario');
+ const result=await readXubioReport('diario',new File([write(book,{type:'array',bookType:'xlsx',compression:true})],'diario-sintetico.xlsx'));
+ expect(result.errors).toEqual([]);const entries=journalEntries(result);expect(entries).toHaveLength(3);expect(entries.every(e=>e.balanced)).toBe(true);
+ expect(result.lines[3].document).toBe('2 · Cargo de prueba');expect(result.lines[3].description).toBe('Cargo de prueba');
+ expect(result.lines[3].entry).toBe(result.lines[2].entry);
+ expect(entries.filter(e=>e.date.startsWith('2026-09'))).toHaveLength(1);
+ const audit=auditXubio([], {...reports(10),diario:result},accounts,'2026-09',true);expect(audit.groups).toHaveLength(1);expect(audit.ready).toBe(true);
+});
+
+test('observa errores de cabecera y balance antes de cruzar el Diario con otros reportes',()=>{
+ const header=['N°','Fecha','Documento/Concepto','Código','Cuenta','Debe','Haber'];
+ const valid=[['1','2026-09-05','Asiento de prueba','501','Comisiones sintéticas',10,0],['','2026-09-05','','101','Banco sintético',0,10]];
+ expect(report('diario',[header,...valid]).errors).toEqual([]);
+ const wrong=structuredClone(valid);wrong[1][6]=9;expect(report('diario',[header,...wrong]).errors.join(' ')).toContain('desbalanceados');
+ const date=structuredClone(valid);date[1][1]='2026-09-06';expect(report('diario',[header,...date]).errors.join(' ')).toContain('Nueva fecha');
+ const reference=structuredClone(valid);reference[1][0]='1';reference[1][2]='Otro documento';expect(report('diario',[header,...reference]).errors.join(' ')).toContain('Número repetido');
 });

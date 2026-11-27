@@ -8,7 +8,7 @@ import type {ComafiResult,ComafiCategory} from '@/lib/imports/comafi';
 
 export type XubioReportKind='diario'|'mayor'|'saldos';
 export const reportLabels={diario:'Libro Diario / asientos detallados',mayor:'Libro Mayor',saldos:'Sumas y Saldos'};
-export type XubioLine={row:number;date:string;document:string;code:string;account:string;debit:string;credit:string;balance?:string;circuit:string;description:string};
+export type XubioLine={entry?:string;row:number;date:string;document:string;code:string;account:string;debit:string;credit:string;balance?:string;circuit:string;description:string};
 export type XubioBalance={row:number;code:string;account:string;opening:string;debit:string;credit:string;closing:string;adjustedDebit:string;adjustedCredit:string;adjustedClosing:string;valid:boolean};
 export type XubioReport={kind:XubioReportKind;filename:string;sha256:string;mode:'detail'|'summary';lines:XubioLine[];balances:XubioBalance[];warnings:string[];errors:string[];dates:string[];accounts:string[];summaries:{date:string;document:string;description:string}[]};
 export const normalizeAccount=(s:string)=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim().toLowerCase();
@@ -28,13 +28,13 @@ export function parseXubioReport(kind:XubioReportKind,table:SourceTable,filename
  const result:XubioReport={kind,filename,sha256,mode:'detail',lines:[],balances:[],warnings:[],errors:[],dates:[],accounts:[],summaries:[]};
  const headers=table.headers.map(normalizeAccount);
  const index=(...keys:string[])=>{const indices=headers.flatMap((h,i)=>keys.includes(h)?[i]:[]);if(indices.length>1)throw new Error('Hay columnas duplicadas o ambiguas: '+keys[0]);return indices[0]??-1;};
- const columns={date:index('fecha'),document:index('documento','comprobante'),number:index('numero','n°','nº','nro','numero de asiento'),account:index('cuenta'),code:index('codigo'),debit:index('debe','debitos'),credit:index('haber','creditos'),balance:index('saldo'),description:index('descripcion','concepto','documento/concepto'),circuit:index('circuito contable','circuitocontable','circuito'),opening:index('saldo anterior'),closing:index('saldo final'),adjustedDebit:index('debitos ajustados'),adjustedCredit:index('creditos ajustados'),adjustedClosing:index('saldo final ajustado')};
+ const columns={date:index('fecha'),document:index('documento','comprobante','documento/concepto'),number:index('numero','n°','nº','nro','numero de asiento'),account:index('cuenta'),code:index('codigo'),debit:index('debe','debitos'),credit:index('haber','creditos'),balance:index('saldo'),description:index('descripcion','concepto','documento/concepto'),circuit:index('circuito contable','circuitocontable','circuito'),opening:index('saldo anterior'),closing:index('saldo final'),adjustedDebit:index('debitos ajustados'),adjustedCredit:index('creditos ajustados'),adjustedClosing:index('saldo final ajustado')};
  const summary=kind==='diario'&&columns.date>=0&&columns.description>=0&&columns.account<0&&columns.debit<0&&columns.credit<0;
  result.mode=summary?'summary':'detail';
  const required=kind==='saldos'?['account','opening','debit','credit','closing']:(summary?['date','description']:['date','account','debit','credit']) as (keyof typeof columns)[];
  if(required.some(key=>columns[key as keyof typeof columns]<0))throw new Error('El archivo no tiene las columnas del reporte elegido. Revisá que sea '+reportLabels[kind]+'.');
  if(kind==='diario'&&!summary&&columns.document<0&&columns.number<0)throw new Error('El Diario necesita Documento o Número de asiento para agrupar sus líneas.');
- let lastDate='',lastDocument='';
+ let lastDate='',lastNumber='',lastDocument='',lastCircuit='',lastDescription='';
  for(const row of table.rows){try{
   if(row.invalidCells?.length)throw new Error('Convertí las fórmulas a valores verificados antes de usar el reporte');
   const get=(key:keyof typeof columns)=>row.cells[columns[key]]?.trim()??'';
@@ -54,19 +54,28 @@ export function parseXubioReport(kind:XubioReportKind,table:SourceTable,filename
    continue;
   }
   if(summary){result.summaries.push({date:reportDate(get('date')),document:get('document'),description:get('description')});continue;}
-  if(get('date'))lastDate=reportDate(get('date'));if(!lastDate)throw new Error('Falta la fecha');
-  const identifier=[get('number'),get('document')].filter(Boolean).join(' · ');
-  if(identifier)lastDocument=identifier;if(!lastDocument)throw new Error('Falta el documento o número de asiento');
+  const nextDate=get('date')?reportDate(get('date')):lastDate;if(!nextDate)throw new Error('Falta la fecha');
+  const number=get('number'),document=get('document'),circuit=get('circuit');
+  const changedDate=!!lastDate&&nextDate!==lastDate,changedCircuit=!!circuit&&circuit!==lastCircuit;
+  if((changedDate||changedCircuit)&&!number&&!document)throw new Error('Nueva fecha o circuito sin documento o número de asiento');
+  if(number&&number===lastNumber&&!changedDate&&!changedCircuit&&document&&lastDocument&&document!==lastDocument)throw new Error('Número repetido con documento distinto en la misma fecha y circuito');
+  const newEntry=!lastDate||changedDate||changedCircuit||!!(number&&number!==lastNumber)||!!(!number&&document&&document!==lastDocument);
+  if(newEntry){lastNumber=number;lastDocument=document;lastCircuit=circuit;lastDescription=get('description');}
+  else{if(number)lastNumber=number;if(!lastDocument&&document)lastDocument=document;if(circuit)lastCircuit=circuit;if(!lastDescription&&get('description'))lastDescription=get('description');}
+  lastDate=nextDate;
+  if(!lastNumber&&!lastDocument)throw new Error('Falta el documento o número de asiento');
+  const identifier=[lastNumber,lastDocument].filter(Boolean).join(' · '),entry=lastNumber?'number:'+lastNumber:'document:'+lastDocument;
   if(!get('account'))throw new Error('Falta la cuenta contable');
   const debit=money('debit'),credit=money('credit');
   if(cents(debit)<0n||cents(credit)<0n)throw new Error('Debe/Haber negativos requieren revisar el formato detallado');
   if(cents(debit)!==0n&&cents(credit)!==0n)throw new Error('Una línea lleva Debe o Haber, no ambos');
   const balance=columns.balance<0||!get('balance')?undefined:money('balance');
-  result.lines.push({row:row.row,date:lastDate,document:lastDocument,code:get('code'),account:get('account'),debit,credit,balance,circuit:get('circuit'),description:get('description')});
+  result.lines.push({entry,row:row.row,date:lastDate,document:identifier,code:get('code'),account:get('account'),debit,credit,balance,circuit:lastCircuit,description:get('description')||lastDescription});
  }catch(error){result.errors.push(`Fila ${row.row}: ${error instanceof Error?error.message:'Datos inválidos'}.`);}}
  result.dates=[...new Set([...result.lines.map(l=>l.date),...result.summaries.map(s=>s.date)])].sort();
  result.accounts=[...new Set([...result.lines.map(l=>l.account),...result.balances.map(l=>l.account)])];
  if(summary)result.warnings.push('Este archivo es un listado de asientos sin líneas contables. Hace falta el Libro Diario detallado para concluir faltantes y exportar.');
+ if(kind==='diario'&&!summary){for(const entry of journalEntries(result))if(!entry.balanced)result.errors.push(`Asiento iniciado en fila ${entry.row}: líneas incompletas, sin importes o Debe/Haber desbalanceados.`);}
  if(kind==='mayor'){
   result.warnings.push(`El Mayor cubre ${result.accounts.length} cuenta(s); no sustituye el Diario completo.`);
   const running=new Map<string,bigint>();
@@ -77,6 +86,13 @@ export function parseXubioReport(kind:XubioReportKind,table:SourceTable,filename
  }
  return result;
 }
+export function journalEntries(report:XubioReport){
+ const groups=new Map<string,{id:string;row:number;date:string;reference:string;lines:number;debit:bigint;credit:bigint}>();
+ if(report.kind!=='diario'||report.mode!=='detail')return [];
+ for(const line of report.lines){const id=line.date+'|'+line.circuit+'|'+(line.entry??line.document),g=groups.get(id)??{id,row:line.row,date:line.date,reference:line.document,lines:0,debit:0n,credit:0n};g.lines++;g.debit+=cents(line.debit);g.credit+=cents(line.credit);groups.set(id,g);}
+ return [...groups.values()].map(g=>({...g,debit:decimalFromCents(g.debit),credit:decimalFromCents(g.credit),balanced:g.lines>=2&&g.debit>0n&&g.debit===g.credit}));
+}
+
 export async function readXubioReport(kind:XubioReportKind,file:File){const buffer=await file.arrayBuffer();return parseXubioReport(kind,await readSource(buffer,file.name),file.name,await digest(buffer));}
 
 export type Candidate={id:string;date:string;description:string;reference:string;currency:string;source:'book'|'voucher'|'bank';lines:JournalLine[];blocked:string[];voucher?:Voucher;record?:BookRecord;bankKey?:string};
@@ -145,7 +161,7 @@ export function auditXubio(candidates:Candidate[],reports:Partial<Record<XubioRe
  function resolve(code:string,name:string){const matches=accounts.filter(a=>code?a.code===code:normalizeAccount(a.name)===normalizeAccount(name));if(matches.length!==1||(code&&normalizeAccount(matches[0].name)!==normalizeAccount(name)))return undefined;return matches[0].id;}
  if(diary?.mode==='detail'){
   const grouped=new Map<string,{id:string;date:string;reference:string;lines:JournalLine[]}>();
-  for(const l of diary.lines){if(l.date.slice(0,7)!==month)continue;const id=l.date+'|'+l.circuit+'|'+l.document;let group=grouped.get(id);if(!group){group={id,date:l.date,reference:l.document,lines:[]};grouped.set(id,group);}
+  for(const l of diary.lines){if(l.date.slice(0,7)!==month)continue;const id=l.date+'|'+l.circuit+'|'+(l.entry??l.document);let group=grouped.get(id);if(!group){group={id,date:l.date,reference:l.document,lines:[]};grouped.set(id,group);}
    const account=resolve(l.code,l.account);if(!account){issues.push(`Diario fila ${l.row}: cuenta desconocida o ambigua respecto del plan de la empresa.`);continue;}
    if(cents(l.debit)||cents(l.credit))group.lines.push({account_id:account,debit:l.debit,credit:l.credit});
   }

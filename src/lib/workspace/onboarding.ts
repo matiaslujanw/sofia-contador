@@ -32,6 +32,7 @@ export const sectionGuide = {
   calendario: "Cargá vencimientos de forma manual y registrá sus fechas de presentación o pago.",
   cuentas: "Consultá, cargá o importá el plan de cuentas que usás para clasificar los comprobantes de cada empresa.",
   informes: "Consultá compras, ventas, IVA y avance del cierre de la empresa y el período seleccionados.",
+  xubio: "Cargá reportes mensuales de Xubio, compará con comprobantes, bancos y asientos preparados, revisá los posibles faltantes y generá lotes controlados.",
   auditoria: "Revisá alertas, registros que requieren atención y la actividad que dejó cada cambio.",
   configuracion: "Administrá el estudio, sus preferencias y los permisos de acceso de sus integrantes.",
 } satisfies Record<Section, string>;

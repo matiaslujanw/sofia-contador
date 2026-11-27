@@ -52,6 +52,7 @@ const companyTools = [
   { title: "Documentación e importaciones", description: "Guardar respaldos e importar planillas de la empresa.", section: "documentacion", icon: Files },
   { title: "Plan de cuentas", description: "Consultar, cargar o importar las cuentas contables.", section: "cuentas", icon: ListTree },
   { title: "Checklist y cierre mensual", description: "Controlar lo pendiente, completar tareas y cerrar el mes.", section: "cierre", icon: ClipboardCheck },
+  { title: "Auditoría mensual de Xubio", description: "Cargar reportes, comparar registraciones y exportar faltantes revisados.", section: "xubio", icon: ShieldAlert },
   { title: "Auditoría y controles", description: "Revisar alertas y el historial de cambios de esta empresa.", section: "auditoria", icon: ShieldAlert },
 ] as const;
 

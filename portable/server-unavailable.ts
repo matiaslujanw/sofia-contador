@@ -6,6 +6,7 @@ export {
   unavailable as signOut,
   unavailable as confirmWorkspaceImport,
   unavailable as downloadWorkspaceDocument,
+  unavailable as listWorkspaceDocuments,
   unavailable as mutateWorkspace,
   unavailable as uploadWorkspaceDocument,
 };

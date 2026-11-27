@@ -11,7 +11,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useSyncExternalStore, type MouseEventHandler } from "react";
 import { signOut } from "@/lib/supabase/auth-actions";
-import { confirmWorkspaceImport, downloadWorkspaceDocument, mutateWorkspace, uploadWorkspaceDocument } from "@/lib/workspace/actions";
+import { confirmWorkspaceImport, downloadWorkspaceDocument, mutateWorkspace, uploadWorkspaceDocument, listWorkspaceDocuments } from "@/lib/workspace/actions";
 import { demoTourCompanyId, demoTourPeriodId, demoTourTaskId } from "@/lib/workspace/demo";
 import { companyName, initials, monthLabel, shiftMonth } from "@/lib/workspace/format";
 import { confirmLocalImport, decodeLocal, downloadLocalDocument, readLocalDocument, emptyLocalSnapshot, localSnapshot, mutateLocal, subscribeLocal, uploadLocalDocument } from "@/lib/workspace/local";
@@ -26,6 +26,7 @@ import { CompanyDashboard, CompanyHome, StudyDashboard } from "./workspace-dashb
 import { AccountsPage, DocumentsPage, VouchersPage } from "./workspace-records";
 import { NextWorkspaceStep, WorkspaceGuide } from "./workspace-onboarding";
 import { BookPage } from "./workspace-book";
+import { XubioAuditPage } from "./workspace-xubio-audit";
 import { PreparationPage } from "./workspace-preparation";
 import { MonthlyControlPage } from "./workspace-monthly";
 import { ClosingPage, CompaniesPage } from "./workspace-operations";
@@ -34,7 +35,7 @@ import { TourEntry, WorkspaceTour } from "./workspace-tour";
 
 const primaryNav = [
   { id: "inicio", icon: House }, { id: "empresas", icon: Building2 }, { id: "cierre", icon: ClipboardCheck },
-  { id: "cuentas", icon: ListTree }, { id: "preparacion", icon: LayoutList }, { id: "control", icon: ClipboardCheck }, { id: "contabilidad", icon: LayoutList }, { id: "comprobantes", icon: ReceiptText }, { id: "documentacion", icon: FileText }, { id: "calendario", icon: CalendarDays },
+  { id: "cuentas", icon: ListTree }, { id: "preparacion", icon: LayoutList }, { id: "control", icon: ClipboardCheck }, { id: "xubio", icon: ShieldCheck }, { id: "contabilidad", icon: LayoutList }, { id: "comprobantes", icon: ReceiptText }, { id: "documentacion", icon: FileText }, { id: "calendario", icon: CalendarDays },
 ] as const;
 
 const secondaryNav = [
@@ -126,7 +127,7 @@ export function Workspace({ initial, section, mode, email, month, today, company
       if (mode === "demo") window.setTimeout(() => URL.revokeObjectURL(response.data.url), 10000);
     },
     async readDocument(document) {
-      if (!state.documents.some(d=>d.id===document.id && d.organization_id===organization?.id)) throw new Error('El documento no pertenece al espacio de trabajo.');
+      if (document.organization_id!==organization?.id) throw new Error('El documento no pertenece al espacio de trabajo.');
       if (document.size_bytes>maxDocumentBytes) throw new Error('El archivo supera el límite de lectura.');
       if (mode==='demo') return readLocalDocument(document);
       const response=await downloadWorkspaceDocument(document.id);
@@ -140,6 +141,11 @@ export function Workspace({ initial, section, mode, email, month, today, company
         await verifyDocument(file);
         return file;
       }
+    },
+    async currentDocuments(){
+      if(!company||!period)throw new Error('Seleccioná empresa y período.');
+      if(mode==='demo')return decodeLocal(localSnapshot(),initial).documents.filter(d=>d.company_id===company.id&&d.period_id===period.id);
+      const result=await listWorkspaceDocuments(company.id,period.id);if(!result.ok)throw new Error(result.message);return result.data;
     },
     async confirmImport({ file, kind, mapping, decimal }) {
       if (!company) throw new Error("Seleccioná una empresa.");
@@ -212,6 +218,7 @@ export function Workspace({ initial, section, mode, email, month, today, company
       case "calendario": return <CalendarPage key={`${company?.id}-${month}`} />;
       case "informes": return <CompanyDashboard report />;
       case "auditoria": return <AuditPage />;
+      case "xubio": return <XubioAuditPage key={`${company?.id}-${period?.id??month}`}/>;
       case "configuracion": return <SettingsPage />;
     }
   })();

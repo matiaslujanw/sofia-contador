@@ -113,3 +113,8 @@ El recorrido mensual empieza con Compras y continúa con Ventas, Banco y Papel i
 La importación se abre expresamente desde Plan de cuentas. Agrega códigos nuevos y conserva las cuentas existentes; cambiar una cuenta se hace con Editar y retirar su uso con Inactiva. No se sobreescriben referencias históricas ni se crean planes separados por mes. La validación de cuentas usadas en períodos cerrados sigue vigente.
 
 Compatibilidad con el archivo existente: documentos/imports aún exigen un período para el respaldo. Al importar cuentas se utiliza el período abierto más reciente de la misma empresa, independientemente del mes consultado; si no existe ninguno, se informa esa condición y se mantiene disponible la edición individual. No se abre ni reabre un mes automáticamente. Esto solo afecta el original y su historial; accounts sigue siendo una tabla por empresa sin period_id. Sin cambios de esquema.
+
+
+## Auditoría mensual de Xubio
+
+Nuevo apartado por empresa/mes para Diario detallado o listado manual, Mayor y Sumas y Saldos, cruce de fuentes y generación controlada de XLS. El listado manual sin líneas no habilita exportación. Ver formatos, créditos firmados, alcance, persistencia y limitaciones en [Auditoría de Xubio](XUBIO_AUDIT.md).

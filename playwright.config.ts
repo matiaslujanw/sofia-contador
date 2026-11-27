@@ -8,7 +8,7 @@ export default defineConfig({
   timeout: 45_000,
   expect: { timeout: 10_000 },
   workers: 2,
-  use: { ...devices["Desktop Chrome"], baseURL, trace: "retain-on-failure" },
+  use: { ...devices["Desktop Chrome"], baseURL, trace: "retain-on-failure", launchOptions: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? {executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH}:undefined },
   webServer: {
     command: `npm run dev -- --port ${port}`,
     url: baseURL,

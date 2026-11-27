@@ -26,7 +26,9 @@ export function xubioRows(records:BookRecord[],accounts:Account[],vouchers:Vouch
 }
 export async function xubioWorkbook(records:BookRecord[],accounts:Account[],vouchers:Voucher[],circuit:string) {
  const XLSX=await import('xlsx');
- const rows=xubioRows(records,accounts,vouchers,circuit),sheet=XLSX.utils.aoa_to_sheet(rows);
+ const rows=xubioRows(records,accounts,vouchers,circuit);
+ if(rows.length>65536)throw new Error('El lote supera el límite de filas XLS. Dividí la selección en lotes más pequeños.');
+ const sheet=XLSX.utils.aoa_to_sheet(rows);
  for(let r=1;r<rows.length;r++){if(typeof rows[r][0]==='number'){sheet[XLSX.utils.encode_cell({r,c:0})].z='dd/mm/yyyy';}}
  const book=XLSX.utils.book_new();XLSX.utils.book_append_sheet(book,sheet,'Hoja1');
  return XLSX.write(book,{bookType:'biff8',type:'array'}) as ArrayBuffer;

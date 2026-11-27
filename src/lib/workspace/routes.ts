@@ -11,6 +11,7 @@ export const sections = {
   calendario: "Calendario fiscal",
   informes: "Informes financieros",
   auditoria: "Auditoría",
+  xubio: "Auditoría de Xubio",
   configuracion: "Configuración",
 } as const;
 

@@ -59,3 +59,8 @@ Se validó el PDF Comafi recibido de septiembre: 22 movimientos, tres cuentas y 
 ## Separación del plan de cuentas (27/11/2026)
 
 Plan de cuentas es configuración permanente de la empresa: carga inicial, alta de cuentas, edición e inactivación cuando corresponde. No integra las etapas mensuales ni se exige repetirlo al cambiar de mes. Preparar mes arranca en Compras y enlaza al plan ya disponible. La portada separa Datos permanentes de Revisar lo cargado del mes, con cantidad de comprobantes, compras pendientes de aprobación, ausencia de ventas confirmada y respaldos. Estas cantidades ayudan a revisar; no certifican que la documentación esté completa o que una DDJJ sea correcta. Empezar una revisión no elimina registros ni borra VigIA; no se accedió a su información real durante esta entrega.
+
+
+## Cruce con Xubio
+
+Después de preparar comprobantes, banco y asientos, ingresar a Auditoría de Xubio. Guardar los tres reportes del mes, verificar empresa/filtros/moneda, revisar cuentas y hallazgos, guardar revisión y generar exclusivamente faltantes elegibles confirmados. Coincidencias y dudas se excluyen. El XLS/manifiesto queda archivado; tras importarlo, cargar Diario actualizado para verificar. No representa una auditoría de documentación ausente ni confirma carga externa. Ver [alcance y límites](XUBIO_AUDIT.md).

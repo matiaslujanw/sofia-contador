@@ -20,6 +20,7 @@ export type Context = {
   upload: (category: string, file: File) => Promise<void>;
   download: (document: Document) => Promise<void>;
   readDocument: (document: Document) => Promise<File>;
+  currentDocuments: () => Promise<Document[]>;
   confirmImport: (input: { file: File; kind: ImportKind; mapping: ColumnMapping; decimal: "auto" | "comma" | "point" }) => Promise<{ row_count: number; duplicate_count: number; reused: boolean }>;
 };
 

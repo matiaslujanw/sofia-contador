@@ -10,6 +10,7 @@ import { verifyDocument } from "./documents";
 import { validateBook } from "@/lib/accounting/engine";
 import { loadWorkspace } from "./queries";
 import { commandSchema, documentContextSchema, importOptionsSchema } from "./validation";
+import type { Document } from './model';
 
 type Result<T> = { ok: true; data: T } | { ok: false; message: string };
 type ImportOutcome = { row_count: number; duplicate_count: number; reused: boolean };
@@ -229,6 +230,15 @@ export async function downloadWorkspaceDocument(rawId: string): Promise<Result<{
     const { signedUrl } = checked(await access.supabase.storage.from(bucket).createSignedUrl(document.storage_path, 60, { download: document.name }));
     return { ok: true, data: { url: signedUrl } };
   } catch (error) { return failure(error); }
+}
+
+export async function listWorkspaceDocuments(companyId:string,periodId:string):Promise<Result<Document[]>>{
+  try{
+    const access=await liveAccess();const period=await periodScope(access.supabase,z.uuid().parse(periodId));
+    if(period.company_id!==z.uuid().parse(companyId))throw new WorkspaceError('Empresa y período incompatibles.');
+    const rows:Document[]=[];
+    for(let offset=0;;offset+=500){const batch=checked(await access.supabase.from('documents').select('*').eq('company_id',companyId).eq('period_id',periodId).order('id').range(offset,offset+499)) as Document[];rows.push(...batch);if(batch.length<500)return {ok:true,data:rows};}
+  }catch(error){return failure(error);}
 }
 
 export async function confirmWorkspaceImport(form: FormData): Promise<Result<ImportOutcome>> {

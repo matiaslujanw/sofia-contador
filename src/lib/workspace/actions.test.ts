@@ -1,5 +1,5 @@
 import {beforeEach,expect,test,vi} from 'vitest';
-import {confirmWorkspaceImport,mutateWorkspace,uploadWorkspaceDocument} from './actions';
+import {confirmWorkspaceImport,mutateWorkspace,uploadWorkspaceDocument,listWorkspaceDocuments} from './actions';
 import {readSource,suggestMapping} from '@/lib/imports';
 const mocks=vi.hoisted(()=>({access:vi.fn(),invalidate:vi.fn(),upload:vi.fn(),remove:vi.fn(),rpc:vi.fn(),fail:false,existingPlan:false,filters:[] as {table:string;column:string;value:unknown}[]}));
 vi.mock('next/cache',()=>({revalidatePath:mocks.invalidate}));
@@ -45,4 +45,10 @@ test('el mismo plan se reconoce por empresa aunque el archivo se haya archivado 
  expect(mocks.filters).toContainEqual({table:'imports',column:'company_id',value:companyId});
  expect(mocks.filters.filter(f=>f.table==='imports'&&f.column==='period_id')).toEqual([]);
  expect(mocks.upload).not.toHaveBeenCalled();expect(mocks.rpc).not.toHaveBeenCalled();
+});
+
+test('la consulta fresca de respaldos rechaza una empresa distinta de la del período',async()=>{
+ const result=await listWorkspaceDocuments('10000000-0000-4000-8000-000000000099',periodId);
+ expect(result).toMatchObject({ok:false,message:'Empresa y período incompatibles.'});
+ expect(mocks.filters.some(f=>f.table==='documents')).toBe(false);
 });

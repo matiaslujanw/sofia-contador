@@ -13,7 +13,7 @@ test("agrega controles TEM al checklist del período y exporta el detalle de IVA
   expect((await download).suggestedFilename()).toMatch(/sofia-30719990017-.*-iva-detalle.csv/);
   await page.reload();
   await expect(page.getByRole("button", { name: "Agregar control: Liquidación de TEM", exact: true })).toHaveCount(0);
-  await page.getByRole("link", { name: "Cierre mensual", exact: true }).click();
+  await page.getByRole("link", { name: "Checklist y cierre", exact: true }).click();
   await expect(page.getByRole("row").filter({ hasText: "Liquidación de TEM" })).toContainText("Pendiente");
 });
 

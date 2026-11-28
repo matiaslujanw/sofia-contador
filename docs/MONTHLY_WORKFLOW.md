@@ -1,5 +1,7 @@
 # Circuito mensual solicitado
 
+> Navegación actual (28/11/2026): [trabajo mensual simplificado](SIMPLE_MONTHLY_WORKFLOW.md). Los apartados siguientes conservan el alcance y la evolución de los módulos; los accesos ocasionales ahora se despliegan desde Herramientas de la empresa.
+
 Alcance: contabilidad de varias empresas argentinas, con operaciones en Tucumán y obligación municipal TEM cuando corresponda. El municipio, régimen y vigencia se verifican por empresa. El destino de registración definitiva es Xubio.
 
 ## Entrega: Control mensual

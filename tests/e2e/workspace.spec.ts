@@ -58,7 +58,7 @@ test("enlaza un respaldo y conserva la descarga después de recargar", async ({ 
   await page.getByRole("button", { name: "Descargar respaldo-sintetico.csv" }).click();
   expect((await downloaded).suggestedFilename()).toBe("respaldo-sintetico.csv");
 
-  await page.getByRole("link", { name: "Cierre mensual", exact: true }).click();
+  await page.getByRole("link", { name: "Checklist y cierre", exact: true }).click();
   await page.getByRole("button", { name: "Editar tarea Recepción de extractos bancarios" }).click();
   const task = page.getByRole("dialog", { name: "Recepción de extractos bancarios" });
   await task.getByLabel("Documento vinculado").selectOption({ label: "respaldo-sintetico.csv" });

@@ -25,7 +25,7 @@ import { AuditPage, CalendarPage, SettingsPage } from "./workspace-admin";
 import { WorkspaceContext, type Context } from "./workspace-context";
 import { CompanyDashboard, CompanyHome, StudyDashboard } from "./workspace-dashboard";
 import { AccountsPage, DocumentsPage, VouchersPage } from "./workspace-records";
-import { NextWorkspaceStep, WorkspaceGuide } from "./workspace-onboarding";
+import { WorkspaceGuide } from "./workspace-onboarding";
 import { BookPage } from "./workspace-book";
 import { XubioAuditPage } from "./workspace-xubio-audit";
 import {CorePage,PendingCoreModule} from "./workspace-core";
@@ -35,15 +35,26 @@ import { ClosingPage, CompaniesPage } from "./workspace-operations";
 import { Field, Input, Modal, Select } from "./workspace-ui";
 import { TourEntry, WorkspaceTour } from "./workspace-tour";
 
-const coreNav=[{id:'nucleo',icon:House},{id:'cuentas',icon:ListTree},{id:'diario',icon:LayoutList},{id:'mayor',icon:ListTree},{id:'balance',icon:ChartNoAxesCombined},{id:'compras',icon:ReceiptText},{id:'ventas',icon:ReceiptText},{id:'bancos',icon:Building2},{id:'impuestos',icon:CalendarDays},{id:'xubio',icon:ShieldCheck},{id:'estados',icon:ChartNoAxesCombined},{id:'configuracion',icon:Settings}] as const;
-const primaryNav = [
-  { id: "inicio", icon: House }, { id: "empresas", icon: Building2 }, { id: "cierre", icon: ClipboardCheck },
-  { id: "cuentas", icon: ListTree }, { id: "preparacion", icon: LayoutList }, { id: "control", icon: ClipboardCheck }, { id: "xubio", icon: ShieldCheck }, { id: "contabilidad", icon: LayoutList }, { id: "comprobantes", icon: ReceiptText }, { id: "documentacion", icon: FileText }, { id: "calendario", icon: CalendarDays },
+// Keep occasional tools reachable without competing with the monthly workflow.
+const monthlyNav = [
+  {id: 'inicio', label: 'Mes de trabajo', icon: House},
+  {id: 'preparacion', label: 'Cargar el mes', icon: FileText},
+  {id: 'xubio', label: 'Auditar Xubio', icon: ShieldCheck},
+  {id: 'cierre', label: 'Checklist y cierre', icon: ClipboardCheck},
 ] as const;
-
-const secondaryNav = [
-  { id: "informes", icon: ChartNoAxesCombined },
-  { id: "auditoria", icon: ShieldCheck }, { id: "configuracion", icon: Settings },
+const companyNav = [
+  {id: 'cuentas', label: 'Plan de cuentas', icon: ListTree},
+  {id: 'comprobantes', label: 'Compras y ventas cargadas', icon: ReceiptText},
+  {id: 'contabilidad', label: 'Registros y ajustes', icon: LayoutList},
+  {id: 'control', label: 'Papel de trabajo de IVA', icon: ClipboardCheck},
+  {id: 'calendario', label: 'Vencimientos fiscales', icon: CalendarDays},
+  {id: 'documentacion', label: 'Archivos guardados', icon: FileText},
+  {id: 'nucleo', label: 'Contabilidad propia', icon: House},
+  {id: 'diario', label: 'Libro Diario', icon: LayoutList},
+  {id: 'mayor', label: 'Libro Mayor', icon: ListTree},
+  {id: 'balance', label: 'Sumas y saldos', icon: ChartNoAxesCombined},
+  {id: 'informes', label: 'Informes financieros', icon: ChartNoAxesCombined},
+  {id: 'auditoria', label: 'Historial y controles', icon: ShieldCheck},
 ] as const;
 
 type Props = {
@@ -179,19 +190,23 @@ export function Workspace({ initial, section, mode, email, month, today, company
       </Link>
       <nav aria-label="Navegación principal" className="nav-groups">
         {company && <Link className="text-button" href={href("inicio", { companyId: undefined })} onClick={close}>← Todas las empresas</Link>}
-        {company&&<ul className="nav-list" aria-label="Núcleo contable">{coreNav.map(({id,icon:Icon})=><li key={id}><Link className="nav-link" aria-current={section===id?'page':undefined} href={href(id)} onClick={close}><Icon size={19} aria-hidden="true"/><span>{sections[id]}{(['bancos','impuestos','estados'] as string[]).includes(id)&&<small className="muted"> · Pendiente</small>}</span></Link></li>)}</ul>}
-        <details className="nav-more" open={!company||primaryNav.some(i=>i.id===section)&&!coreNav.some(i=>i.id===section)||undefined}><summary>Herramientas existentes<ChevronDown size={15}/></summary>
-        <ul className="nav-list">{primaryNav.filter(item => (company || item.id === "inicio" || item.id === "empresas")&&(!company||!coreNav.some(c=>c.id===item.id))).map(({ id, icon: Icon }) =>
-          <li key={id}><Link className="nav-link" aria-current={section === id ? "page" : undefined} href={href(id, id === "empresas" ? { companyId: undefined } : undefined)} onClick={close}>
-            <Icon size={19} strokeWidth={1.7} aria-hidden="true" />{sections[id]}
-          </Link></li>)}
-        </ul></details>
-        <details className="nav-more" open={secondaryNav.some((item) => item.id === section) || undefined}>
-          <summary>Más herramientas<ChevronDown size={15} aria-hidden="true" /></summary>
-          <ul className="nav-list">{secondaryNav.filter(item => (company || item.id === "configuracion")&&(!company||!coreNav.some(c=>c.id===item.id))).map(({ id, icon: Icon }) =>
-            <li key={id}><Link className="nav-link" aria-current={section === id ? "page" : undefined} href={href(id)} onClick={close}>
-              <Icon size={18} strokeWidth={1.7} aria-hidden="true" />{sections[id]}
+        <ul className="nav-list" aria-label={company ? 'Trabajo mensual' : 'Estudio'}>
+          {(company ? monthlyNav : [{id:'inicio' as const,label:'Empresas',icon:Building2}]).map(({id,label,icon:Icon}) =>
+            <li key={id}><Link className="nav-link" aria-current={section===id?'page':undefined} href={href(id)} onClick={close}>
+              <Icon size={19} aria-hidden="true"/><span>{label}</span>
             </Link></li>)}
+        </ul>
+        {company && <details className="nav-more" key={section} open={companyNav.some(item=>item.id===section)||undefined}>
+          <summary>Herramientas de la empresa<ChevronDown size={15} aria-hidden="true"/></summary>
+          <ul className="nav-list">{companyNav.map(({id,label,icon:Icon}) => <li key={id}>
+            <Link className="nav-link" aria-current={section===id?'page':undefined} href={href(id)} onClick={close}><Icon size={18} aria-hidden="true"/>{label}</Link>
+          </li>)}</ul>
+        </details>}
+        <details className="nav-more" open={section==='empresas'||section==='configuracion'||undefined}>
+          <summary>Administración<ChevronDown size={15} aria-hidden="true"/></summary>
+          <ul className="nav-list">
+            <li><Link className="nav-link" aria-current={section==='empresas'?'page':undefined} href={href('empresas',{companyId:undefined})} onClick={close}><Building2 size={18}/>Gestionar empresas</Link></li>
+            <li><Link className="nav-link" aria-current={section==='configuracion'?'page':undefined} href={href('configuracion')} onClick={close}><Settings size={18}/>Configuración</Link></li>
           </ul>
         </details>
       </nav>
@@ -226,7 +241,7 @@ export function Workspace({ initial, section, mode, email, month, today, company
       case "calendario": return <CalendarPage key={`${company?.id}-${month}`} />;
       case "informes": return <CompanyDashboard report />;
       case "auditoria": return <AuditPage />;
-      case "xubio": return <XubioAuditPage key={`${company?.id}-${period?.id??month}`}/>;
+      case "xubio": return <XubioAuditPage exportRequested={purpose==='exportar'} key={`${company?.id}-${period?.id??month}`}/>;
       case "configuracion": return <SettingsPage />;
     }
   })();
@@ -278,7 +293,6 @@ export function Workspace({ initial, section, mode, email, month, today, company
           </button>}
         </header>
         <main id="contenido" className="workspace-main" tabIndex={-1}>
-          {mode === "auth" && (company || section !== "inicio") && <NextWorkspaceStep {...guideProps} openGuide={openGuide} />}
           {mode === "demo" && tourCompany && tourStep !== null && <WorkspaceTour
             step={tourStep} sample={sample} current={selection} section={section} continuing={continuing} portable={portable}
             companyName={companyName(tourCompany)} taskTitle={tourTask?.title ?? "la tarea de ejemplo"} sampleSelected={sampleSelected}

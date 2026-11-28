@@ -1,0 +1,53 @@
+import {expect,test} from '@playwright/test';
+import {createDemoWorkspace} from '../../src/lib/workspace/demo';
+import {shiftMonth,todayIn} from '../../src/lib/workspace/format';
+const company='10000000-0000-4000-8000-000000000010',other='10000000-0000-4000-8000-000000000011';
+const month=todayIn().slice(0,7);
+
+test('el recorrido mensual mantiene cuatro accesos y conserva las herramientas bajo demanda',async({page})=>{
+ await page.goto(`/inicio?empresa=${company}&mes=${month}`);
+ const main=page.getByRole('main'),nav=page.getByRole('list',{name:'Trabajo mensual'});
+ await expect(nav.getByRole('link')).toHaveCount(4);
+ await expect(nav).not.toContainText('Pendiente');
+ await expect(main.getByRole('heading',{level:2})).toHaveText(['Cargar el mes','Auditar Xubio','Revisar y exportar ajustes']);
+ await expect(page.getByRole('link',{name:'Plan de cuentas',exact:true})).not.toBeVisible();
+ await page.getByText('Herramientas de la empresa',{exact:true}).click();
+ await expect(page.getByRole('link',{name:'Plan de cuentas',exact:true})).toBeVisible();
+ await page.getByRole('link',{name:'Plan de cuentas',exact:true}).click();
+ await expect(page).toHaveURL(new RegExp(`cuentas.*empresa=${company}`));
+ await expect(page.getByRole('combobox',{name:'Período',exact:true})).toHaveCount(0);
+ await nav.getByRole('link',{name:'Mes de trabajo',exact:true}).click();
+ await main.getByRole('link',{name:'Abrir auditoría de Xubio',exact:true}).click();
+ await expect(page.getByRole('navigation',{name:'Pasos de la auditoría'}).getByRole('link')).toHaveCount(4);
+ await expect(page.getByLabel('Libro Diario / asientos detallados',{exact:true})).toBeVisible();
+ await expect(page.getByRole('region',{name:'Diagnóstico mensual'})).toBeVisible();
+ await expect(page.getByRole('button',{name:'Generar XLS de faltantes revisados'})).toBeDisabled();
+ await page.getByRole('link',{name:'4. Exportar ajustes',exact:true}).click();
+ await expect(page).toHaveURL(/#xubio-exportar$/);
+ await expect(page.getByRole('heading',{name:'4. Archivo para importar a Xubio'})).toBeInViewport();
+ await page.getByRole('link',{name:'Volver a la empresa',exact:true}).click();
+ await main.getByRole('link',{name:'Revisar ajustes para Xubio',exact:true}).click();
+ await expect(page).toHaveURL(/tipo=exportar/);
+ await expect(page.getByRole('heading',{name:'4. Archivo para importar a Xubio'})).toBeInViewport();
+});
+
+test('los estados de carga son por empresa y mes y nunca anuncian auditoría aprobada',async({page})=>{
+ const s=createDemoWorkspace(month),p=s.periods.find(p=>p.company_id===company&&p.month.startsWith(month))!;
+ s.vouchers=[];
+ s.documents=[...s.documents.filter(d=>d.company_id!==company),...['diario','mayor','saldos'].map((kind,i)=>({id:`00000000-0000-4000-8000-00000000010${i}`,organization_id:s.organization!.id,company_id:company,period_id:p.id,name:`xubio-${kind}-${month}-sintetico.csv`,category:'Respaldos',mime_type:'text/csv',size_bytes:1,storage_path:'synthetic',sha256:'0'.repeat(64),created_at:`${month}-01T12:00:00Z`,created_by:null}))];
+ await page.addInitScript(s=>localStorage.setItem('sofia-contable-demo-v1',JSON.stringify(s)),s);
+ await page.goto(`/inicio?empresa=${company}&mes=${month}`);
+ const workflow=page.getByLabel('Trabajo del mes');
+ await expect(workflow).toContainText('3 de 3 reportes guardados');
+ await expect(workflow).toContainText('Pendiente de carga o declaración sin actividad');
+ await expect(workflow).not.toContainText('Auditoría aprobada');
+ await page.getByRole('combobox',{name:'Empresa',exact:true}).selectOption(other);
+ await expect(workflow).toContainText('0 de 3 reportes guardados');
+ await page.getByRole('combobox',{name:'Empresa',exact:true}).selectOption(company);
+ await expect(workflow).toContainText('3 de 3 reportes guardados');
+ await page.getByRole('combobox',{name:'Período',exact:true}).selectOption(shiftMonth(month,-1));
+ await expect(workflow).toContainText('0 de 3 reportes guardados');
+ await page.getByRole('combobox',{name:'Período',exact:true}).selectOption(month);
+ await expect(page).toHaveURL(new RegExp(`mes=${month}`));
+ await page.reload();await expect(workflow).toContainText('3 de 3 reportes guardados');
+});

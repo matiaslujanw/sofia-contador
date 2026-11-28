@@ -425,3 +425,24 @@ td.cell-nowrap, .cell-numeric { white-space: nowrap; }
 
 .button-danger { background: #532c3a; color: #ffe0e7; border-color: #b7657e; }
 .button-danger:hover { background: #6b3044; border-color: #f0a5bb; }
+
+/* Monthly work stays visible; occasional tools expand only when needed. */
+.monthly-workflow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.monthly-workflow-step { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; }
+.monthly-workflow-step .panel-heading { margin-bottom: 0; }
+.monthly-workflow-step > .button { margin-top: auto; width: 100%; white-space: normal; text-align: center; min-height: 44px; }
+.workflow-number { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 12px; background: #fce4ed; color: #873b60; font-weight: 700; }
+.monthly-workflow-step:nth-child(2) .workflow-number { background: #eee5fa; color: #634185; }
+.workflow-count { font-size: 1.05rem; font-weight: 650; }
+.workflow-status { list-style: none; padding: 0; margin: 0; width: 100%; }
+.workflow-status li + li { border-top: 1px solid var(--line-soft); }
+.workflow-status a { display: grid; gap: 4px; padding: 10px 0; min-height: 44px; }
+.workflow-status span { font-size: .81rem; color: var(--muted); }
+.occasional-tools summary { cursor: pointer; min-height: 44px; align-content: center; font-weight: 600; }
+.occasional-tool-links { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; margin-top: 16px; }
+.occasional-tool-links a { min-height: 44px; }
+.audit-steps { display: flex; flex-wrap: wrap; gap: 8px; }
+.audit-steps a { min-height: 44px; }
+.audit-help summary { cursor: pointer; min-height: 44px; align-content: center; }
+@media(max-width:1100px) { .monthly-workflow { grid-template-columns: 1fr; } .occasional-tool-links { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media(max-width:550px) { .occasional-tool-links { grid-template-columns: 1fr; } .occasional-tools summary span { display: block; } }

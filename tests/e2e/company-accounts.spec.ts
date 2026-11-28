@@ -23,7 +23,7 @@ test('un único plan se importa aparte, se conserva entre meses y se modifica si
  await dialog.getByRole('button',{name:'Guardar cambios',exact:true}).click();await expect(dialog).toHaveCount(0);
  await page.reload();await expect(row.getByRole('cell',{name:'Cuenta permanente revisada',exact:true})).toBeVisible();
  await page.goto(`/inicio?empresa=${company}`);
- await expect(page.getByRole('region',{name:'Configuración permanente'})).toBeVisible();
+ await expect(page.getByText('Datos de la empresa y otras tareas',{exact:false})).toBeVisible();
  await page.getByRole('link',{name:'Comenzar preparación del mes',exact:true}).click();
  await expect(page.getByRole('heading',{name:'Compras del mes',exact:true})).toBeVisible();
  await expect(page.getByRole('navigation',{name:'Pasos para preparar el mes'}).getByRole('link')).toHaveCount(4);

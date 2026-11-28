@@ -1,9 +1,9 @@
 "use client";
 
 import {
-  ArrowLeft, Building2, CalendarClock, Calculator, ChartNoAxesCombined, ChevronRight,
-  ClipboardCheck, FileSpreadsheet, Files, Landmark, ListTree, NotebookPen, Package,
-  Plus, ReceiptText, ShieldAlert, Users, Wallet, type LucideIcon,
+  Building2, CalendarClock, ChartNoAxesCombined, ChevronRight,
+  ClipboardCheck, Files, Landmark, ListTree, NotebookPen, Package,
+  Plus, ReceiptText, ShieldAlert, Wallet, type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 import {brand} from "@/lib/brand";
@@ -40,50 +40,71 @@ export function StudyDashboard() {
   </>;
 }
 
-const companyTools = [
-  {title:'Núcleo contable',description:'Ejercicios, Diario confirmado, Mayor y balance de sumas y saldos.',section:'nucleo',icon:NotebookPen},
-  { title: "Vencimientos fiscales", description: "Configurar fechas habituales y revisar vencimientos de ARCA, IIBB y TEM.", section: "calendario", icon: CalendarClock },
-  { title: "Compras y ventas", description: "Cargar comprobantes manuales, importar y revisar su clasificación.", section: "comprobantes", icon: ReceiptText },
-  { title: "Clientes y proveedores", description: "Saldos iniciales, cuentas corrientes, cobros y pagos parciales.", section: "contabilidad", tab: "current", icon: Users },
-  { title: "Caja y bancos", description: "Registrar ingresos, egresos, gastos bancarios y otros movimientos.", section: "contabilidad", tab: "cash", icon: Wallet },
-  { title: "Impuestos y sueldos", description: "Devengamientos, obligaciones, pagos y control fiscal bancario.", section: "contabilidad", tab: "accrual", icon: Calculator },
-  { title: "Papel de trabajo de IVA", description: "Revisar subtotales de IVA y descargar el detalle del período.", section: "control", anchor: "iva-worksheet", icon: FileSpreadsheet },
-  { title: "Conciliación bancaria", description: "Cargar extractos, controlar saldos y vincular movimientos.", section: "contabilidad", tab: "reconciliation", icon: Landmark },
-  { title: "Bienes de uso y amortizaciones", description: "Altas, vida útil y registro de la cuota mensual.", section: "contabilidad", tab: "assets", icon: Package },
-  { title: "Asientos y Xubio", description: "Preparar asientos balanceados y exportar el archivo XLS.", section: "contabilidad", tab: "journal", icon: NotebookPen },
-  { title: "Ingresos, egresos y rentabilidad", description: "Consultar el resultado y el flujo de fondos con gráficos.", section: "contabilidad", tab: "reports", icon: ChartNoAxesCombined },
-  { title: "Documentación e importaciones", description: "Guardar respaldos e importar planillas de la empresa.", section: "documentacion", icon: Files },
-  { title: "Plan de cuentas", description: "Consultar, cargar o importar las cuentas contables.", section: "cuentas", icon: ListTree },
-  { title: "Checklist y cierre mensual", description: "Controlar lo pendiente, completar tareas y cerrar el mes.", section: "cierre", icon: ClipboardCheck },
-  { title: "Auditoría mensual de Xubio", description: "Ver diferencias, tareas pendientes y posibles asientos faltantes; generar lotes revisados.", section: "xubio", icon: ShieldAlert },
-  { title: "Auditoría y controles", description: "Revisar alertas y el historial de cambios de esta empresa.", section: "auditoria", icon: ShieldAlert },
+const occasionalTools = [
+  {title:'Plan de cuentas',section:'cuentas',icon:ListTree},
+  {title:'Vencimientos fiscales · IVA, IIBB y TEM',section:'calendario',icon:CalendarClock},
+  {title:'Clientes y proveedores',section:'contabilidad',tab:'current',icon:Building2},
+  {title:'Caja y bancos',section:'contabilidad',tab:'cash',icon:Landmark},
+  {title:'Impuestos y sueldos',section:'contabilidad',tab:'accrual',icon:ReceiptText},
+  {title:'Conciliación bancaria',section:'contabilidad',tab:'reconciliation',icon:Landmark},
+  {title:'Bienes de uso y amortizaciones',section:'contabilidad',tab:'assets',icon:Package},
+  {title:'Contabilidad propia · Diario, Mayor y balance',section:'nucleo',icon:NotebookPen},
+  {title:'Archivos guardados',section:'documentacion',icon:Files},
 ] as const;
 
 export function CompanyHome() {
-  const { company, month, locale, href, state, period } = useWorkspace();
-  if (!company) return null;
-  const accounts=state.accounts.filter(a=>a.company_id===company.id);
+  const {company,month,locale,href,state,period}=useWorkspace();
+  if(!company)return null;
+  const accounts=state.accounts.filter(a=>a.company_id===company.id&&a.status==='active');
   const vouchers=state.vouchers.filter(v=>v.company_id===company.id&&v.period_id===period?.id);
   const docs=state.documents.filter(d=>d.company_id===company.id&&d.period_id===period?.id);
-  const noSales=state.tasks.some(t=>t.period_id===period?.id&&t.title==='Recepción de comprobantes emitidos'&&t.status==='not_applicable')&&!vouchers.some(v=>v.direction==='sale');
+  const reception=(direction:'purchase'|'sale')=>{
+    const rows=vouchers.filter(v=>v.direction===direction);
+    const absent=state.tasks.some(t=>t.period_id===period?.id&&t.title===(direction==='sale'?'Recepción de comprobantes emitidos':'Recepción de comprobantes recibidos')&&t.status==='not_applicable');
+    return rows.length ? `${rows.length} comprobantes · ${rows.filter(v=>v.review_status!=='approved').length} por revisar` : absent?'Sin actividad declarado':'Pendiente de carga o declaración sin actividad';
+  };
+  const reports=['diario','mayor','saldos'].filter(kind=>docs.some(d=>d.name.startsWith(`xubio-${kind}-${month}-`))).length;
+  const extracts=docs.filter(d=>d.category==='Extractos bancarios').length;
   return <>
-    <div><Link className="text-button" href={href("inicio", { companyId: undefined })}><ArrowLeft size={16} aria-hidden="true" /> Todas las empresas</Link></div>
     <section className="company-overview">
       <span className="avatar company-hero-avatar" aria-hidden="true">{initials(companyName(company))}</span>
-      <Heading title={companyName(company)} description={`CUIT ${cuitLabel(company.cuit)} · ${monthLabel(month, locale)}`}
-        actions={<Link className="button button-secondary" href={href("cierre")}>Abrir cierre</Link>} />
+      <Heading title={companyName(company)} description={`CUIT ${cuitLabel(company.cuit)} · ${monthLabel(month,locale)}`}
+        actions={<Link className="button button-secondary" href={href('cierre')}>Abrir cierre</Link>}/>
     </section>
-    <section className="panel" aria-label="Configuración permanente"><SectionHeading title="Datos permanentes de la empresa" subtitle="Se mantienen entre meses y se modifican cuando hace falta."/><Link className="text-button" href={href('cuentas')}>Plan de cuentas · {accounts.length} cuentas guardadas</Link><p className="muted text-sm">{accounts.filter(a=>a.status==='active').length} activas · {accounts.filter(a=>a.status==='inactive').length} inactivas. No requiere una carga mensual.</p></section>
-    <section className="panel"><SectionHeading title="Preparar el mes, paso a paso" subtitle="Compras, ventas, resumen bancario y papel impositivo del mes seleccionado." action={<Link className="button button-primary" href={href("preparacion")}>Comenzar preparación del mes</Link>} />
-    <h3 className="mt-3">Revisar lo cargado · {monthLabel(month,locale)}</h3><ul className="mt-3"><li><Link className="text-button" href={href('preparacion',{}, {tipo:'compras'})}>Compras: {vouchers.filter(v=>v.direction==='purchase').length} comprobantes · {vouchers.filter(v=>v.direction==='purchase'&&v.review_status!=='approved').length} pendientes de revisión</Link></li><li><Link className="text-button" href={href('preparacion',{}, {tipo:'ventas'})}>Ventas: {noSales?'Sin ventas confirmado':`${vouchers.filter(v=>v.direction==='sale').length} comprobantes`}</Link></li><li><Link className="text-button" href={href('preparacion',{}, {tipo:'banco'})}>Banco: {docs.filter(d=>d.category==='Extractos bancarios').length} extractos · {docs.filter(d=>d.category==='Papeles de trabajo'&&d.name===`comafi-${month}-papel-bancario.csv`).length} papeles guardados</Link></li></ul><Link className="text-button mt-3" href={href('control')}>Ver controles del mes y pendientes</Link></section>
-    <div className="company-tool-grid" aria-label={`Herramientas de ${companyName(company)}`}>
-      {companyTools.filter(tool=>tool.section!=='cuentas').map(tool => <Link key={tool.title} className="panel company-tool-card"
-        href={href(tool.section, {}, "tab" in tool ? { tipo: tool.tab } : undefined) + ("anchor" in tool ? `#${tool.anchor}` : "")}>
-        <span className="section-icon" aria-hidden="true"><tool.icon size={21} /></span>
-        <span><strong>{tool.title}</strong><small>{tool.description}</small></span>
-        <ChevronRight size={18} aria-hidden="true" />
-      </Link>)}
+    {!period&&<section className="notice">Este mes todavía no está iniciado. <Link className="text-button" href={href('cierre')}>Iniciar período</Link></section>}
+    {period?.status==='closed'&&<p className="notice">Período cerrado: podés consultar sus registros. Para modificarlos se requiere la reapertura desde Checklist y cierre.</p>}
+    {!accounts.length&&<p className="notice notice-warning">Primero importá el plan de cuentas de Xubio. Se guarda una sola vez por empresa. <Link className="text-button" href={href('cuentas')}>Cargar plan de cuentas</Link></p>}
+    <div className="monthly-workflow" aria-label="Trabajo del mes">
+      <section className="panel monthly-workflow-step">
+        <span className="workflow-number" aria-hidden="true">1</span>
+        <SectionHeading title="Cargar el mes" subtitle="Compras y ventas de ARCA, comprobantes manuales y resumen Comafi."/>
+        <ul className="workflow-status">
+          <li><Link href={href('preparacion',{}, {tipo:'compras'})}><strong>Compras</strong><span>{reception('purchase')}</span></Link></li>
+          <li><Link href={href('preparacion',{}, {tipo:'ventas'})}><strong>Ventas</strong><span>{reception('sale')}</span></Link></li>
+          <li><Link href={href('preparacion',{}, {tipo:'banco'})}><strong>Banco</strong><span>{extracts?`${extracts} extractos guardados`:'Pendiente de carga'}</span></Link></li>
+        </ul>
+        <Link className="button button-primary" href={href('preparacion')}>Comenzar preparación del mes</Link>
+      </section>
+      <section className="panel monthly-workflow-step">
+        <span className="workflow-number" aria-hidden="true">2</span>
+        <SectionHeading title="Auditar Xubio" subtitle="Subí Diario, Mayor y Sumas y Saldos del mismo mes para comparar."/>
+        <p className="workflow-count">{reports} de 3 reportes guardados</p>
+        <p className="muted text-sm">Revisá posibles asientos faltantes, diferencias bancarias y documentación pendiente.</p>
+        <Link className="button button-primary" href={href('xubio')}>Abrir auditoría de Xubio</Link>
+      </section>
+      <section className="panel monthly-workflow-step">
+        <span className="workflow-number" aria-hidden="true">3</span>
+        <SectionHeading title="Revisar y exportar ajustes" subtitle="Confirmá los faltantes y generá el archivo para importar a Xubio."/>
+        <p className="muted text-sm">Después de importarlo en Xubio, cargá sus reportes actualizados y volvé a auditar. Descargar un lote no confirma su registración.</p>
+        <Link className="button button-secondary" href={href('xubio',{}, {tipo:'exportar'})}>Revisar ajustes para Xubio</Link>
+      </section>
     </div>
+    <details className="panel occasional-tools">
+      <summary>Datos de la empresa y otras tareas <span className="muted">· {accounts.length} cuentas activas</span></summary>
+      <p className="muted text-sm mt-3">El plan de cuentas y los vencimientos habituales se configuran una vez. Usá las demás herramientas cuando correspondan.</p>
+      <div className="occasional-tool-links">{occasionalTools.map(tool=><Link key={tool.title} className="text-button" href={href(tool.section,{},'tab' in tool?{tipo:tool.tab}:undefined)}><tool.icon size={17} aria-hidden="true"/>{tool.title}</Link>)}</div>
+      <Link className="text-button mt-3" href={href('control')}>Papel de trabajo de IVA y controles del mes</Link>
+    </details>
   </>;
 }
 

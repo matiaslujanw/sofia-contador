@@ -14,6 +14,8 @@ test('el inicio muestra empresas y cada empresa abre sus herramientas con el alc
  await main.getByRole('link').filter({hasText:'Nexo Custodia'}).click();
  await expect(page).toHaveURL(new RegExp(`empresa=${nexo}`));
  await expect(main.getByRole('heading',{name:'Nexo Custodia',exact:true})).toBeVisible();
+ await expect(main.getByRole('link').filter({hasText:'Conciliación bancaria'})).not.toBeVisible();
+ await main.getByText('Datos de la empresa y otras tareas',{exact:false}).click();
  await expect(main.getByRole('link').filter({hasText:'Conciliación bancaria'})).toBeVisible();
  await main.getByRole('link').filter({hasText:'Caja y bancos'}).click();
  await expect(page).toHaveURL(/tipo=cash/);
@@ -33,6 +35,8 @@ test('las empresas y sus accesos se pueden usar en iPad y teléfono',async({page
   await page.setViewportSize({width,height:1180});await page.goto('/inicio');
   await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
   await page.getByRole('main').getByRole('link').filter({hasText:'Nexo Custodia'}).click();
+  await expect(page.getByLabel('Trabajo del mes')).toBeVisible();
+  await page.getByRole('main').getByText('Datos de la empresa y otras tareas',{exact:false}).click();
   await expect(page.getByRole('main').getByRole('link').filter({hasText:'Bienes de uso y amortizaciones'})).toBeVisible();
   await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
  }

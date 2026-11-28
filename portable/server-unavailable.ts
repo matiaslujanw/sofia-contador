@@ -10,3 +10,5 @@ export {
   unavailable as mutateWorkspace,
   unavailable as uploadWorkspaceDocument,
 };
+
+export const previewWorkspaceCompanyDeletion = unavailable;

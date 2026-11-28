@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Building2, ClipboardCheck, FileText, Lock, Pencil, Plus, Unlock } from "lucide-react";
 import Link from "next/link";
+import {CompanyDeletionModal,PendingCompanyDeletionFiles} from "./company-deletion";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { demoTourTaskId } from "@/lib/workspace/demo";
@@ -64,6 +65,7 @@ function CompanyForm({ company, close }: { company?: Company; close: () => void 
 export function CompaniesPage({ openNew = false }: { openNew?: boolean }) {
   const { state, canEdit, href, mutate } = useWorkspace();
   const [surface, setSurface] = useState<"new" | Company | null>(openNew ? "new" : null);
+  const [deleting,setDeleting]=useState<Company|null>(null);
   const [archive, setArchive] = useState<Company | null>(null);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("active");
@@ -87,11 +89,13 @@ export function CompaniesPage({ openNew = false }: { openNew?: boolean }) {
           <td><Badge tone={company.status === "active" ? "positive" : "neutral"} dot>{company.status === "active" ? "Activa" : "Archivada"}</Badge></td>
           <td><div className="table-actions"><Link className="button button-secondary" href={href("inicio", { companyId: company.id })}>Abrir</Link>
             {canEdit && <><button type="button" className="button button-secondary" onClick={() => setSurface(company)} aria-label={`Editar ${companyName(company)}`}><Pencil size={15} /> Editar</button>
-              <button type="button" className="button button-secondary" onClick={() => setArchive(company)}>{company.status === "active" ? "Archivar" : "Reactivar"}</button></>}
+              <button type="button" className="button button-secondary" onClick={() => setArchive(company)}>{company.status === "active" ? "Archivar" : "Reactivar"}</button>{state.organization?.role==='owner'&&<button type="button" className="button button-danger" aria-label={`Eliminar ${companyName(company)}`} onClick={()=>setDeleting(company)}>Eliminar</button>}</>}
           </div></td>
         </tr>)}</tbody>
       </table></div> : <Empty icon={Building2} title={search ? "Sin coincidencias" : "Todavía no hay empresas con este estado"} text={search ? "Probá con otro nombre o CUIT." : undefined} />}
     </section>
+    <PendingCompanyDeletionFiles/>
+    {deleting&&<CompanyDeletionModal company={deleting} close={()=>setDeleting(null)}/>}
     {surface && canEdit && <CompanyForm company={surface === "new" ? undefined : surface} close={() => setSurface(null)} />}
     {archive && <Modal title={archive.status === "active" ? "Archivar empresa" : "Reactivar empresa"} description={companyName(archive)} close={() => setArchive(null)}>
       <ActionForm close={() => setArchive(null)} label={archive.status === "active" ? "Archivar empresa" : "Reactivar empresa"} submit={async () => {

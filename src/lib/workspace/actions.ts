@@ -12,6 +12,7 @@ import { verifyDocument } from "./documents";
 import { validateBook } from "@/lib/accounting/engine";
 import { loadWorkspace } from "./queries";
 import { commandSchema, documentContextSchema, importOptionsSchema } from "./validation";
+import type {DeletionPreview,CompanyDeletion} from './company-deletion';
 import type { Document } from './model';
 
 type Result<T> = { ok: true; data: T } | { ok: false; message: string };
@@ -68,17 +69,24 @@ async function saveRecord(client: SupabaseClient, table: string, id: string | un
   return checked(await query.select("id").single());
 }
 
-export async function mutateWorkspace(input: unknown): Promise<Result<{ id?: string }>> {
+export async function mutateWorkspace(input: unknown): Promise<Result<{ id?: string;notice?:string }>> {
   const result = await performWorkspaceMutation(input);
   if (result.ok) revalidatePath('/[section]', 'page');
   return result;
 }
 
-async function performWorkspaceMutation(input: unknown): Promise<Result<{ id?: string }>> {
+async function performWorkspaceMutation(input: unknown): Promise<Result<{ id?: string;notice?:string }>> {
   try {
     const { supabase, userId } = await liveAccess();
     const command = commandSchema.parse(input);
     switch (command.type) {
+      case 'company.delete':{
+        const outcome=await supabase.rpc('delete_workspace_company',{target_company:command.companyId,confirmation_cuit:command.cuit,expected_signature:command.signature});
+        if(outcome.error){if(['PGRST202','42883'].includes(outcome.error.code))throw new WorkspaceError('Falta activar la función de eliminación en Supabase. La empresa no fue eliminada.');if(outcome.error.code==='23503')throw new WorkspaceError('Hay otros registros relacionados que impiden eliminar la empresa. No se eliminó ningún dato.');throw new WorkspaceError(outcome.error.message);}
+        if(typeof outcome.data!=='string')throw new WorkspaceError('No se recibió una confirmación de eliminación.');
+        try{return {ok:true,data:await cleanupCompanyFiles(supabase,outcome.data)};}catch{return {ok:true,data:{id:outcome.data,notice:'Empresa eliminada. Volvé a cargar Empresas para verificar y completar la limpieza de archivos.'}};}
+      }
+      case 'company.deletion.cleanup':return {ok:true,data:await cleanupCompanyFiles(supabase,command.deletionId)};
       case 'core.exercise':return {ok:true,data:{id:checked(await supabase.rpc('create_accounting_exercise',{target_company:command.companyId,exercise_name:command.name,start_date:command.startsOn,end_date:command.endsOn}))}};
       case 'core.profile':return {ok:true,data:{id:checked(await supabase.rpc('save_accounting_profile',{target_account:command.accountId,heading:command.heading,subheading:command.subheading,nature:command.nature,postable:command.postable,xubio_code:command.xubioCode}))}};
       case 'core.post':return {ok:true,data:{id:checked(await supabase.rpc('post_accounting_entry',{target_period:command.periodId,target_exercise:command.exerciseId,entry_date:command.date,concept:command.description,source:command.sourceKey,entry_lines:command.lines,related_voucher:command.voucherId,related_document:command.documentId,allow_duplicate:command.allowDuplicate}))}};
@@ -295,4 +303,22 @@ async function performWorkspaceImport(form: FormData): Promise<Result<ImportOutc
     }));
     return { ok: true, data: result as ImportOutcome };
   } catch (error) { return failure(error); }
+}
+
+
+export async function previewWorkspaceCompanyDeletion(companyId:string):Promise<Result<DeletionPreview>>{
+ try{const {supabase}=await liveAccess();const id=z.uuid().parse(companyId);const result=await supabase.rpc('preview_company_deletion',{target_company:id});
+  if(result.error){if(['PGRST202','42883'].includes(result.error.code))throw new WorkspaceError('Falta activar la función de eliminación en Supabase. Podés descargar la migración para aplicarla.');throw new WorkspaceError(result.error.message);}
+  if(!result.data)throw new WorkspaceError('No se pudo consultar la empresa.');return {ok:true,data:result.data as DeletionPreview};
+ }catch(error){return failure(error);}
+}
+async function cleanupCompanyFiles(client:SupabaseClient,id:string):Promise<{id:string;notice:string}>{
+ const result=await client.from('company_deletions').select('*').eq('id',id).single();
+ if(result.error||!result.data)throw new WorkspaceError('No se pudo consultar el estado de la eliminación. Volvé a cargar Empresas para verificarlo.');
+ const job=result.data as CompanyDeletion;
+ try{
+  for(let i=0;i<job.storage_paths.length;i+=100){const response=await client.storage.from(bucket).remove(job.storage_paths.slice(i,i+100));if(response.error)throw new Error('Limpieza pendiente.');}
+  const complete=await client.rpc('complete_company_deletion',{target_deletion:id});if(complete.error)throw new Error('Limpieza pendiente.');
+  return {id,notice:'Empresa eliminada definitivamente. Ya podés volver a cargarla con el mismo CUIT.'};
+ }catch{return {id,notice:'Empresa eliminada. Quedan archivos por retirar; podés reintentar la limpieza desde Empresas.'};}
 }

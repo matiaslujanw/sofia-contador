@@ -1,3 +1,4 @@
+import {localDeletionPreview,removeLocalCompany,deletionScope} from "./company-deletion";
 import {applyCoreCommand} from "@/lib/accounting/core/local";
 import {coreState} from "@/lib/accounting/core/engine";
 import {withFiscalRule} from "./fiscal-recurrence";
@@ -77,6 +78,7 @@ export function mutateLocal(initial: WorkspaceState, input: Command) {
       return withEvent(result,'accounting_core',id,companyId,periodId,action);
     }
     switch (command.type) {
+      case "company.delete":case "company.deletion.cleanup":throw new Error("La eliminación requiere la operación asincrónica de confirmación.");
       case "book.import": {
         const period=openPeriod(state,command.periodId),company=requireEntry(state.companies.find(c=>c.id===period.company_id));
         const next={...state,bookRecords:[...(state.bookRecords??[])]};
@@ -315,4 +317,26 @@ export async function confirmLocalImport(initial: WorkspaceState, periodId: stri
     return withEvent({ ...state, imports, accounts: [...state.accounts, ...newAccounts], vouchers: [...state.vouchers, ...newVouchers] }, "imports", id, period.company_id, period.id, "INSERT");
   });
   return outcome;
+}
+
+export async function previewLocalCompanyDeletion(initial:WorkspaceState,companyId:string){return localDeletionPreview(decodeLocal(localSnapshot(),initial),companyId);}
+export async function deleteLocalCompany(initial:WorkspaceState,companyId:string,cuit:string,signature:string){
+ const snapshot=decodeLocal(localSnapshot(),initial),preview=await localDeletionPreview(snapshot,companyId);
+ if(preview.cuit!==cuit)throw new Error('Escribí el CUIT exacto de la empresa.');
+ if(preview.signature!==signature)throw new Error('Las cargas cambiaron. Volvé a revisar el detalle antes de eliminar.');
+ let id='';
+ changeLocal(initial,state=>{
+  if(JSON.stringify(state)!==JSON.stringify(snapshot))throw new Error('Las cargas cambiaron. Volvé a revisar el detalle antes de eliminar.');
+  const {company}=deletionScope(state,companyId),next=removeLocalCompany(state,company,signature);id=next.companyDeletions!.at(-1)!.id;return next;
+ });
+ return cleanupLocalCompanyDeletion(initial,id);
+}
+export async function cleanupLocalCompanyDeletion(initial:WorkspaceState,id:string){
+ const state=decodeLocal(localSnapshot(),initial),job=state.companyDeletions?.find(j=>j.id===id&&j.organization_id===state.organization?.id);
+ if(!job||state.organization?.role!=='owner')throw new Error('Solo la propietaria puede completar la eliminación.');
+ try{
+  for(const path of job.storage_paths){if(window.location.protocol==='file:')portableDocuments.delete(path);else await fileStore('readwrite',store=>store.delete(path));}
+  changeLocal(initial,current=>({...current,companyDeletions:current.companyDeletions?.map(j=>j.id===id?{...j,status:'completed'}:j)}));
+  return {id,notice:'Empresa eliminada definitivamente. Ya podés volver a cargarla con el mismo CUIT.'};
+ }catch{return {id,notice:'Empresa eliminada. Quedan archivos por retirar; podés reintentar la limpieza desde Empresas.'};}
 }

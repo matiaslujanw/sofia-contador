@@ -53,6 +53,8 @@ export const documentContextSchema = z.object({
 });
 
 export const commandSchema = z.discriminatedUnion("type", [
+  z.object({type:z.literal('company.delete'),companyId:uuid,cuit:z.string().regex(/^\d{11}$/),signature:z.string().regex(/^[a-f0-9]{64}$/)}),
+  z.object({type:z.literal('company.deletion.cleanup'),deletionId:uuid}),
   exerciseSchema.safeExtend({type:z.literal('core.exercise')}),
   profileSchema.extend({type:z.literal('core.profile')}),
   entrySchema.extend({type:z.literal('core.post')}),

@@ -69,3 +69,7 @@ Aplicá esta migración en el mismo proyecto Supabase usado por Vercel. No se ca
 Los asientos se confirman mediante `post_accounting_entry`, con saldo exacto, fecha/cuenta autorizadas, numeración serializada, clave de origen única y huella SHA-256; cabecera y líneas se transaccionan. Restricciones diferidas rechazan una cabecera incompleta y triggers prohíben modificar/borrar confirmados. La reversión inserta otro asiento con referencia única al original. Cambios de naturaleza/imputabilidad con historia se rechazan. Los maestros de contrapartes/bancos y la equivalencia están preparados; su integración a los módulos operativos es posterior.
 
 [Diagnóstico y entrega](etapa-1/ENTREGA.md), [activación](etapa-1/ACTIVACION.md). No se certificó la activación remota. La app conserva el funcionamiento previo y deshabilita el núcleo si falta la migración.
+
+## Eliminación explícita de empresas
+
+`20261128000100_company_deletion.sql` agrega la vista previa/eliminación autorizadas por propietaria y `company_deletions` para constancia y limpieza durable de Storage. Elimina empresas/cargas sin asientos confirmados, con CUIT y huella revisada; conserva los historiales inmutables y protege otras empresas. Las cuentas y comprobantes se retiran en una transacción; los originales se retiran después por Storage API y se reintentan si es necesario. Funciona con la base original y adapta la FK histórica del núcleo si está instalado. [Uso, activación y pruebas](COMPANY_DELETION.md).

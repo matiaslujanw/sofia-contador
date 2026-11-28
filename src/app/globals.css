@@ -422,3 +422,6 @@ td.cell-nowrap, .cell-numeric { white-space: nowrap; }
 .activity-declaration > div { flex: 1 1 240px; }
 .activity-declaration p { margin-top: 5px; line-height: 1.5; }
 .activity-declaration .button { white-space: normal; }
+
+.button-danger { background: #532c3a; color: #ffe0e7; border-color: #b7657e; }
+.button-danger:hover { background: #6b3044; border-color: #f0a5bb; }

@@ -1,4 +1,5 @@
 import "server-only";
+import type {CompanyDeletion} from "./company-deletion";
 import {emptyCore,type CoreState,type Exercise,type AccountProfile,type AccountEquivalence,type Entry,type EntryLine,type Party} from "@/lib/accounting/core/model";
 import type { BookRecord } from "@/lib/accounting/model";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -72,10 +73,16 @@ export async function loadWorkspace(client: SupabaseClient, userId: string, orgI
     rows<Exercise>(client,'accounting_exercises',id,'*',coreCompanyId),rows<AccountProfile>(client,'accounting_account_profiles',id,'*',coreCompanyId),rows<AccountEquivalence>(client,'accounting_equivalences',id,'*',coreCompanyId),
     rows<Entry>(client,'accounting_journal_entries',id,'*',coreCompanyId),rows<EntryLine>(client,'accounting_journal_lines',id,'id,organization_id,company_id,entry_id,position,account_id,party_id,debit::text,credit::text',coreCompanyId),rows<Party>(client,'accounting_parties',id,'*',coreCompanyId),
   ]);core={ready:true,exercises,profiles,equivalences,entries,lines,parties};}
+  let companyDeletions:CompanyDeletion[]=[];
+  if(organization.role==='owner'){
+   const pending=await client.from('company_deletions').select('*').eq('organization_id',id).eq('status','files_pending').order('created_at');
+   if(pending.error&&!['42P01','PGRST205'].includes(pending.error.code))throw new Error('No se pudo consultar la limpieza de empresas.');
+   if(!pending.error)companyDeletions=pending.data as CompanyDeletion[];
+  }
   if (activity.error || members.error) throw new Error("No se pudo consultar la actividad o membresía.");
   return {
     organizations, organization, companies: companies.map(normalizeCompany).sort((a, b) => a.legal_name.localeCompare(b.legal_name)),
-    periods, tasks, documents, accounts, vouchers, rules, imports, bookRecords, accountingReady, core,
+    periods, tasks, documents, accounts, vouchers, rules, imports, bookRecords, accountingReady, core, companyDeletions,
     activity: activity.data as AuditEvent[], members: members.data as Member[], obligations,
   };
 }

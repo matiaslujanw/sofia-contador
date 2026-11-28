@@ -15,7 +15,7 @@ import { signOut } from "@/lib/supabase/auth-actions";
 import { confirmWorkspaceImport, downloadWorkspaceDocument, mutateWorkspace, uploadWorkspaceDocument, listWorkspaceDocuments } from "@/lib/workspace/actions";
 import { demoTourCompanyId, demoTourPeriodId, demoTourTaskId } from "@/lib/workspace/demo";
 import { companyName, initials, monthLabel, shiftMonth } from "@/lib/workspace/format";
-import { confirmLocalImport, decodeLocal, downloadLocalDocument, readLocalDocument, emptyLocalSnapshot, localSnapshot, mutateLocal, subscribeLocal, uploadLocalDocument } from "@/lib/workspace/local";
+import { confirmLocalImport, decodeLocal, downloadLocalDocument, readLocalDocument, emptyLocalSnapshot, localSnapshot, mutateLocal, deleteLocalCompany, cleanupLocalCompanyDeletion, subscribeLocal, uploadLocalDocument } from "@/lib/workspace/local";
 import type { WorkspaceState } from "@/lib/workspace/model";
 import { maxDocumentBytes, verifyDocument } from "@/lib/workspace/documents";
 import { getOnboarding } from "@/lib/workspace/onboarding";
@@ -94,14 +94,14 @@ export function Workspace({ initial, section, mode, email, month, today, company
     state, company, period, month, mode, today, canEdit, locale, href,
     async mutate(command, success = "Cambios guardados.") {
       if (mode === "demo") {
-        const result = mutateLocal(initial, command);
-        notify(success);
+        const result = command.type==='company.delete'?await deleteLocalCompany(initial,command.companyId,command.cuit,command.signature):command.type==='company.deletion.cleanup'?await cleanupLocalCompanyDeletion(initial,command.deletionId):mutateLocal(initial, command);
+        notify('notice' in result?String(result.notice):success);
         return result;
       }
       const result = await mutateWorkspace(command);
       if (!result.ok) { router.refresh(); throw new Error(result.message); }
       router.refresh();
-      notify(success);
+      notify(result.data.notice??success);
       return result.data;
     },
     async upload(category, file) {
@@ -195,9 +195,9 @@ export function Workspace({ initial, section, mode, email, month, today, company
           </ul>
         </details>
       </nav>
-      <div className="sidebar-bottom"><div className="profile">
-        <span className="avatar" aria-hidden="true">{initials(organization?.name ?? "Sofía")}</span>
-        <div className="profile-name"><strong>{organization?.name ?? "Sofía"}</strong>
+      <div className="sidebar-bottom"><div className="profile" aria-label="Perfil profesional">
+        <span className="avatar" aria-hidden="true">{initials(brand.professional)}</span>
+        <div className="profile-name"><strong>{brand.professional}</strong>
           <span>{mode === "demo" ? "Demostración" : organization ? roleLabels[organization.role] : email ?? "Acceso privado"}</span>
         </div>
         {mode === "auth" && <form action={signOut}><button type="submit" className="icon-button" aria-label="Cerrar sesión" title="Cerrar sesión"><LogOut size={17} /></button></form>}

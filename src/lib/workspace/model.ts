@@ -1,3 +1,4 @@
+import type {CompanyDeletion} from "./company-deletion";
 import {emptyCore,type CoreState} from "@/lib/accounting/core/model";
 import type { BookRecord } from "@/lib/accounting/model";
 
@@ -97,7 +98,7 @@ export type WorkspaceState = {
   organizations: Organization[]; members: Member[]; organization: Organization | null; companies: Company[]; periods: Period[];
   tasks: Task[]; documents: Document[]; accounts: Account[]; vouchers: Voucher[]; rules: ClassificationRule[];
   imports: ImportRecord[]; activity: AuditEvent[]; obligations: Obligation[];
-  bookRecords: BookRecord[]; accountingReady: boolean; core?:CoreState;
+  bookRecords: BookRecord[]; accountingReady: boolean; core?:CoreState; companyDeletions?:CompanyDeletion[];
 };
 
 export const emptyWorkspace: WorkspaceState = {

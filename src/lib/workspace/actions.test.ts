@@ -1,18 +1,18 @@
 import {beforeEach,expect,test,vi} from 'vitest';
 import {confirmWorkspaceImport,mutateWorkspace,uploadWorkspaceDocument,listWorkspaceDocuments} from './actions';
 import {readSource,suggestMapping} from '@/lib/imports';
-const mocks=vi.hoisted(()=>({access:vi.fn(),invalidate:vi.fn(),upload:vi.fn(),remove:vi.fn(),rpc:vi.fn(),fail:false,existingPlan:false,existingVouchers:false,filters:[] as {table:string;column:string;value:unknown}[]}));
+const mocks=vi.hoisted(()=>({access:vi.fn(),invalidate:vi.fn(),upload:vi.fn(),remove:vi.fn(),rpc:vi.fn(),fail:false,existingPlan:false,existingVouchers:false,deletionJob:null as Record<string,unknown>|null,filters:[] as {table:string;column:string;value:unknown}[]}));
 vi.mock('next/cache',()=>({revalidatePath:mocks.invalidate}));
 vi.mock('@/lib/supabase/access',()=>({getWorkspaceAccess:mocks.access}));
 vi.mock('./queries',()=>({loadWorkspace:vi.fn()}));
 const companyId='10000000-0000-4000-8000-000000000010',periodId='10000000-0000-4000-8000-000000000100',org='10000000-0000-4000-8000-000000000001';
 beforeEach(()=>{
- vi.clearAllMocks();mocks.fail=false;mocks.existingPlan=false;mocks.existingVouchers=false;mocks.filters=[];
+ vi.clearAllMocks();mocks.fail=false;mocks.existingPlan=false;mocks.existingVouchers=false;mocks.deletionJob=null;mocks.filters=[];
  mocks.upload.mockResolvedValue({error:null});mocks.remove.mockResolvedValue({error:null});
  mocks.rpc.mockResolvedValue({data:{row_count:1,duplicate_count:0,reused:false},error:null});
  mocks.access.mockResolvedValue({mode:'auth',userId:'user',supabase:{rpc:mocks.rpc,storage:{from:()=>({upload:mocks.upload,remove:mocks.remove})},from:(table:string)=>{
   const query={select:()=>query,eq:(column:string,value:unknown)=>{mocks.filters.push({table,column,value});return query;},limit:()=>query,insert:()=>query,update:()=>query,
-   single:async()=>({data:table==='periods'?{id:periodId,company_id:companyId,organization_id:org,status:'open',month:'2026-11-01'}:{id:companyId},error:mocks.fail?{message:'synthetic failure'}:null}),
+   single:async()=>({data:table==='company_deletions'?mocks.deletionJob:table==='periods'?{id:periodId,company_id:companyId,organization_id:org,status:'open',month:'2026-11-01'}:{id:companyId},error:mocks.fail?{message:'synthetic failure'}:null}),
    maybeSingle:async()=>({data:mocks.existingVouchers&&table==='vouchers'?{id:'voucher'}:mocks.existingPlan&&table==='imports'?{row_count:1,duplicate_count:0}:null,error:null})};return query;
  }}});
 });
@@ -61,4 +61,23 @@ test('la declaración sin compras consulta comprobantes del período antes de gu
  expect(mocks.filters).toContainEqual({table:'vouchers',column:'company_id',value:companyId});
  expect(mocks.filters).toContainEqual({table:'vouchers',column:'direction',value:'purchase'});
  mocks.existingVouchers=true;expect((await mutateWorkspace(command)).ok).toBe(false);
+});
+
+
+test('elimina archivos mediante Storage API solo después de la confirmación SQL',async()=>{
+ const job='60000000-0000-4000-8000-000000000001',paths=[`${org}/${companyId}/${periodId}/60000000-0000-4000-8000-000000000002`];
+ mocks.deletionJob={id:job,storage_paths:paths};mocks.rpc.mockResolvedValue({data:job,error:null});
+ const result=await mutateWorkspace({type:'company.delete',companyId,cuit:'30719990017',signature:'a'.repeat(64)});
+ expect(result.ok).toBe(true);expect(mocks.remove).toHaveBeenCalledWith(paths);
+ expect(mocks.rpc).toHaveBeenCalledWith('complete_company_deletion',{target_deletion:job});
+});
+test('un fallo de Storage no oculta que la empresa fue eliminada y deja limpieza pendiente',async()=>{
+ const job='60000000-0000-4000-8000-000000000001';mocks.deletionJob={id:job,storage_paths:['synthetic-path']};mocks.rpc.mockResolvedValue({data:job,error:null});mocks.remove.mockResolvedValue({error:{message:'synthetic cleanup failure'}});
+ const result=await mutateWorkspace({type:'company.delete',companyId,cuit:'30719990017',signature:'a'.repeat(64)});
+ expect(result).toMatchObject({ok:true,data:{id:job,notice:expect.stringContaining('Quedan archivos')}});expect(mocks.rpc).not.toHaveBeenCalledWith('complete_company_deletion',expect.anything());expect(mocks.invalidate).toHaveBeenCalled();
+});
+test('sin migración no elimina archivos ni anuncia éxito',async()=>{
+ mocks.rpc.mockResolvedValue({data:null,error:{code:'PGRST202',message:'synthetic missing RPC'}});
+ const result=await mutateWorkspace({type:'company.delete',companyId,cuit:'30719990017',signature:'a'.repeat(64)});
+ expect(result).toMatchObject({ok:false,message:expect.stringContaining('activar')});expect(mocks.remove).not.toHaveBeenCalled();expect(mocks.invalidate).not.toHaveBeenCalled();
 });
